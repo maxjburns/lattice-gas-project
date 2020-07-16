@@ -198,9 +198,31 @@ class Lattice:
                 for z in range(0, 6):
                    
                     if self.lattice[x][y][z] == 1:
+
                         if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
+                        
                             zChange = standardVectors[z]
-                            newBoard[x][y][z + zChange] = 1
+                            if self.lattice[x][y][z + zChange] == 1:
+                                
+
+                                if z == 0 or z == 3:
+                                    scatterPattern = random.choice([1, 2])
+                                    newBoard[x][y][z + scatterPattern] = 1
+                                    newBoard[x][y][z + zChange + scatterPattern] = 1
+
+                                elif z == 1 or z == 4:
+                                    scatterPattern = random.choice([-1, 1])
+                                    newBoard[x][y][z + scatterPattern] = 1
+                                    newBoard[x][y][z + zChange + scatterPattern] = 1
+
+                                elif z == 2 or z == 5:
+                                    scatterPattern = random.choice([1, 2])
+                                    newBoard[x][y][z - scatterPattern] = 1
+                                    newBoard[x][y][z + zChange - scatterPattern] = 1
+
+
+                            else:
+                                newBoard[x][y][z + zChange] = 1
 
                         elif x == self.containerSize - 1:
                             zChange = rightBounceVectors[z]
