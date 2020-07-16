@@ -106,6 +106,15 @@ class Lattice:
 
     #================================================================================#
 
+    def manual_particles(self, manualParticleList):
+        
+        for i in range(0, len(manualParticleList)):
+            x, y, z = manualParticleList[i]
+
+            self.lattice[x][y][z] = 1
+
+    #================================================================================#
+
     def particle_counter(self):
         """creates a array of how many particles are around the nodes in each spot."""
         particleCountList = np.zeros((self.containerSize, self.containerSize), np.int8)
@@ -202,23 +211,19 @@ class Lattice:
                         if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
                         
                             zChange = standardVectors[z]
-                            if self.lattice[x][y][z + zChange] == 1:
-                                
+                            if self.lattice[x][y][z + zChange] == 1:                               
 
                                 if z == 0 or z == 3:
                                     scatterPattern = random.choice([1, 2])
-                                    newBoard[x][y][z + scatterPattern] = 1
-                                    newBoard[x][y][z + zChange + scatterPattern] = 1
 
                                 elif z == 1 or z == 4:
                                     scatterPattern = random.choice([-1, 1])
-                                    newBoard[x][y][z + scatterPattern] = 1
-                                    newBoard[x][y][z + zChange + scatterPattern] = 1
-
+                
                                 elif z == 2 or z == 5:
-                                    scatterPattern = random.choice([1, 2])
-                                    newBoard[x][y][z - scatterPattern] = 1
-                                    newBoard[x][y][z + zChange - scatterPattern] = 1
+                                    scatterPattern = random.choice([-1, -2])
+                                
+                                newBoard[x][y][z + scatterPattern] = 1
+                                newBoard[x][y][z + zChange + scatterPattern] = 1
 
 
                             else:
@@ -245,7 +250,13 @@ class Lattice:
         
     #================================================================================#
 
-latticeList = Lattice(containerSize=20, particleNumber=5)
+latticeList = Lattice(containerSize=30, particleNumber=5)
+#particleInput = [(1, 1, 0), (9, 1, 3), (10, 14, 1), (12, 12, 4)]
+#latticeList.manual_particles(particleInput)
 latticeList.random_particles()
 latticeList.display_heatmap(timeStep=60)
 
+#testArray = np.zeros((ROWS, COLUMNS))
+#print(np.array2string(testArray))
+#testArray[y][x] = 1
+#print(np.array2string(testArray))
