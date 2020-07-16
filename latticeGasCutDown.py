@@ -58,7 +58,8 @@ class Lattice:
     #================================================================================#
 
     def request_pretty_list(self):
-
+        """Creates a string version of the array, 0s denote open spots, 1s denote
+        particles"""
         for i in range(0, containerSize):
             for x in range(0, containerSize):
                 print(self.request_string(i,x), end = ' ')
@@ -68,7 +69,7 @@ class Lattice:
     
     def cell_number(self):
 
-        # Finds number of cells based on containerSize, and tells user (for debugging).
+        """Finds number of cells based on containerSize"""
 
         cellNumber = self.containerSize * self.containerSize - int(self.containerSize / 2)
 
@@ -104,11 +105,10 @@ class Lattice:
 
                 particlesRemaining -= 1
 
-
-
     #================================================================================#
 
     def particle_counter(self):
+        """creates a array of how many particles are around the nodes in each spot."""
         particleCountList = np.zeros((containerSize,containerSize), np.int8)
 
         for i in range(0,containerSize):
@@ -117,13 +117,12 @@ class Lattice:
 
 
         self.particleCountList = particleCountList
-
-
-        
+  
     #================================================================================#
 
     def display_heatmap(self):
-        """this displays the "container" and the particle density inside of it"""
+        """this displays the "container" and the particle density inside of it. runs
+        propagate, then collision, and then recounts particle density."""
         countVar = self.containerSize
         fig, ax = plt.subplots()
         
@@ -153,7 +152,10 @@ class Lattice:
     #================================================================================#
 
     def propagate(self):
-        
+        """propagate process the first part of each "turn", where move from their parent
+        node to another node, based on their index position. at the beginning of
+        propagate, particles are moving away from the central node, at the end,
+        they are moved and considered to be moving away."""
         newBoard = np.zeros((containerSize, containerSize, 6), np.int8)
 
 
@@ -172,11 +174,14 @@ class Lattice:
                         
         self.lattice = newBoard
         
-
     #================================================================================#
 
     def collide(self):
-
+        """collide processes the second part of each "turn", where particles bounce off edges
+        and other particles. On entering collide, particles have an index which denotes the
+        direction that they are approaching the center of the node from. During collide, the
+        particles move from their original index, to another index, across the node if there
+        is no collision."""
         newBoard = np.zeros((containerSize, containerSize, 6), np.int8)
         vectors = [3, 3, 3, -3, -3, -3]
         for y in range(0, containerSize):
