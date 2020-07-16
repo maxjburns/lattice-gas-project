@@ -59,8 +59,8 @@ class Lattice:
     def request_pretty_list(self):
         """Creates a string version of the array, 0s denote open spots, 1s denote
         particles"""
-        for i in range(0, containerSize):
-            for x in range(0, containerSize):
+        for i in range(0, self.containerSize):
+            for x in range(0, self.containerSize):
                 print(self.request_string(i,x), end = ' ')
             print('\n')
 
@@ -119,7 +119,7 @@ class Lattice:
   
     #================================================================================#
 
-    def display_heatmap(self, timeStep):
+    def display_heatmap(self, timeStep = 50):
         """this displays the "container" and the particle density inside of it. runs
         propagate, then collision, and then recounts particle density."""
         countVar = timeStep
@@ -138,7 +138,7 @@ class Lattice:
             self.propagate()
             self.collide()
             
-            plt.pause(1.5)
+            plt.pause(.05)
             countVar -=1
             if(countVar == 1):
                 end = time.time()
@@ -158,18 +158,22 @@ class Lattice:
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
 
 
-        vectors = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
-        
+        vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
+        vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
         
         for y in range(0, self.containerSize):
             for x in range(0, self.containerSize):
                 # that if statement actually helps!
                 if self.particleCountList[x][y] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
                     for z in range(0, 6):
-                        xChange, yChange, zChange = vectors[z]
+                        
+                        if y % 2 == 0:
+                            xChange, yChange, zChange = vectorsOnEvenRow[z]
+                        else:
+                            xChange, yChange, zChange = vectorsOnOddRow[z]
                         if self.lattice[x][y][z] == 1:
-                            
                             newBoard[x + xChange][y + yChange][z + zChange] = 1
+
 
         self.lattice = newBoard
         
@@ -182,26 +186,44 @@ class Lattice:
         particles move from their original index, to another index, across the node if there
         is no collision."""
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
-        vectors = [3, 3, 3, -3, -3, -3]
+        standardVectors = [3, 3, 3, -3, -3, -3]
+        leftBounceVectors = [0, 4, 3, -3, -3, -4]
+        rightBounceVectors = [3, 3, 2, 0, -2, -3]
+        topBounceVectors = [3, 3, 3, -3, 1, -1]
+        bottomBounceVectors = [3, 1, -1, -3, -3, -3]
+
+
         for y in range(0, self.containerSize):
             for x in range(0, self.containerSize):
                 for z in range(0, 6):
-                    zChange = vectors[z]
-                    
-                    if self.lattice[x][y][z] == 1 and (x == self.containerSize - 1 or y == self.containerSize - 1 or x == 0 or y == 0):
-                        newBoard[x][y][z] = 1
+                   
+                    if self.lattice[x][y][z] == 1:
+                        if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
+                            zChange = standardVectors[z]
+                            newBoard[x][y][z + zChange] = 1
 
-                    elif self.lattice[x][y][z] == 1 and x < self.containerSize - 1 and y < self.containerSize - 1:
-                        newBoard[x][y][z + zChange] = 1
-        
+                        elif x == self.containerSize - 1:
+                            zChange = rightBounceVectors[z]
+                            newBoard[x][y][z + zChange] = 1
+
+                        elif y == self.containerSize - 1:
+                            zChange = bottomBounceVectors[z]
+                            newBoard[x][y][z + zChange] = 1
+                        
+                        elif x == 0:
+                            zChange = leftBounceVectors[z]
+                            newBoard[x][y][z + zChange] = 1
+                        
+                        elif y == 0:
+                            zChange = topBounceVectors[z]
+                            newBoard[x][y][z + zChange] = 1
+                    
+
         self.lattice = newBoard
         
     #================================================================================#
 
-
-
-
-latticeList = Lattice(containerSize=5, particleNumber=1)
+latticeList = Lattice(containerSize=20, particleNumber=5)
 latticeList.random_particles()
-latticeList.display_heatmap(60)
+latticeList.display_heatmap(timeStep=60)
 
