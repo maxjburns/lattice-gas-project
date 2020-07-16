@@ -4,8 +4,7 @@
 
 # let's stick to "square"s right now, enter the width of the top layer:
 
-containerSize = 100
-particleNumber = 10000
+
 
 import cProfile
 
@@ -83,7 +82,7 @@ class Lattice:
 
         assert self.particleNumber <= self.cell_number() * 6
 
-        particlesRemaining = particleNumber
+        particlesRemaining = self.particleNumber
         
         # the following while loop attempts to place a particle each iteration, if the spot
         # picked is full, it finds a new random spot on the next iteration. It consumes
@@ -92,8 +91,8 @@ class Lattice:
         while particlesRemaining != 0:
             
             # these randomly select a row and column
-            randomColumn = random.randint(1, containerSize-2)
-            randomRow = random.randint(1, containerSize-2)
+            randomColumn = random.randint(1, self.containerSize-2)
+            randomRow = random.randint(1, self.containerSize-2)
             openSpots = self.spots_remaining(randomColumn, randomRow)
 
             
@@ -109,10 +108,10 @@ class Lattice:
 
     def particle_counter(self):
         """creates a array of how many particles are around the nodes in each spot."""
-        particleCountList = np.zeros((containerSize,containerSize), np.int8)
+        particleCountList = np.zeros((self.containerSize, self.containerSize), np.int8)
 
-        for i in range(0,containerSize):
-            for x in range(0, containerSize):
+        for i in range(0, self.containerSize):
+            for x in range(0, self.containerSize):
                 particleCountList[i][x] = np.count_nonzero(self.lattice[i][x] == 1)
 
 
@@ -131,7 +130,7 @@ class Lattice:
         fig.tight_layout()
 
         while countVar != 0:
-            if(countVar == 20):
+            if(countVar == self.containerSize):
                 start = time.time()
             self.particle_counter()
             
@@ -156,21 +155,24 @@ class Lattice:
         node to another node, based on their index position. at the beginning of
         propagate, particles are moving away from the central node, at the end,
         they are moved and considered to be moving away."""
-        newBoard = np.zeros((containerSize, containerSize, 6), np.int8)
+        newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
 
 
         vectors = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         
         
-        for y in range(0, containerSize):
-            for x in range(0, containerSize):
+        for y in range(0, self.containerSize):
+            for x in range(0, self.containerSize):
                 # that if statement actually helps!
                 if self.particleCountList[x][y] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
                     for z in range(0, 6):
                         xChange, yChange, zChange = vectors[z]
-                        if self.lattice[x][y][z] == 1 and x < containerSize - 1 and y < containerSize - 1:
+                        if self.lattice[x][y][z] == 1 and 0 <= x <= self.containerSize - 1 and 0 <= y <= self.containerSize - 1:
                             
                             newBoard[x + xChange][y + yChange][z + zChange] = 1
+
+                        
+
                         
         self.lattice = newBoard
         
@@ -182,14 +184,17 @@ class Lattice:
         direction that they are approaching the center of the node from. During collide, the
         particles move from their original index, to another index, across the node if there
         is no collision."""
-        newBoard = np.zeros((containerSize, containerSize, 6), np.int8)
+        newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         vectors = [3, 3, 3, -3, -3, -3]
-        for y in range(0, containerSize):
-            for x in range(0, containerSize):
+        for y in range(0, self.containerSize):
+            for x in range(0, self.containerSize):
                 for z in range(0, 6):
                     zChange = vectors[z]
                     
-                    if self.lattice[x][y][z] == 1 and x < containerSize - 1 and y < containerSize - 1:
+                    if self.lattice[x][y][z] == 1 and (x == self.containerSize - 1 or y == self.containerSize - 1 or x == 0 or y == 0):
+                        newBoard[x][y][z] = 1
+
+                    elif self.lattice[x][y][z] == 1 and x < self.containerSize - 1 and y < self.containerSize - 1:
                         newBoard[x][y][z + zChange] = 1
         
         self.lattice = newBoard
@@ -199,7 +204,7 @@ class Lattice:
 
 
 
-latticeList = Lattice(100, 6000)
+latticeList = Lattice(containerSize=100, particleNumber=8)
 latticeList.random_particles()
 latticeList.display_heatmap()
 
