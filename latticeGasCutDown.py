@@ -119,10 +119,10 @@ class Lattice:
   
     #================================================================================#
 
-    def display_heatmap(self):
+    def display_heatmap(self, timeStep):
         """this displays the "container" and the particle density inside of it. runs
         propagate, then collision, and then recounts particle density."""
-        countVar = self.containerSize
+        countVar = timeStep
         fig, ax = plt.subplots()
         
 
@@ -138,7 +138,7 @@ class Lattice:
             self.propagate()
             self.collide()
             
-            plt.pause(0.05)
+            plt.pause(1.5)
             countVar -=1
             if(countVar == 1):
                 end = time.time()
@@ -167,13 +167,10 @@ class Lattice:
                 if self.particleCountList[x][y] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
                     for z in range(0, 6):
                         xChange, yChange, zChange = vectors[z]
-                        if self.lattice[x][y][z] == 1 and 0 <= x <= self.containerSize - 1 and 0 <= y <= self.containerSize - 1:
+                        if self.lattice[x][y][z] == 1:
                             
                             newBoard[x + xChange][y + yChange][z + zChange] = 1
 
-                        
-
-                        
         self.lattice = newBoard
         
     #================================================================================#
@@ -204,7 +201,7 @@ class Lattice:
 
 
 
-latticeList = Lattice(containerSize=100, particleNumber=8)
+latticeList = Lattice(containerSize=5, particleNumber=1)
 latticeList.random_particles()
-latticeList.display_heatmap()
+latticeList.display_heatmap(60)
 
