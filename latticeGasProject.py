@@ -140,6 +140,7 @@ class Lattice:
 
     def particle_counter(self):
         """creates a array of how many particles are around the nodes in each spot."""
+        particleCountTime.recordTime()
         particleCountList = np.zeros((self.containerSize, self.containerSize), np.int8)
 
         for i in range(0, self.containerSize):
@@ -148,6 +149,7 @@ class Lattice:
 
 
         self.particleCountList = particleCountList
+        particleCountTime.recordTime()
   
     #================================================================================#
 
@@ -162,8 +164,8 @@ class Lattice:
         fig.tight_layout()
 
         while countVar != 0:
-            if(countVar == self.containerSize):
-                start = time.time()
+            displayTime.recordTime()
+            overallTime.recordTime()
             self.particle_counter()
             
             im = ax.imshow(self.particleCountList, cmap='Blues')
@@ -172,10 +174,33 @@ class Lattice:
             
             plt.pause(pauseBetweenSteps)
             countVar -=1
-            if(countVar == 1):
-                end = time.time()
-                print('total time elapsed:')
-                print(end - start)
+            if(countVar == 0):
+                print('overall:')
+                overallTime.requestTotalTime()
+
+                overallTime.requestTimeList()
+                
+                print('propagate:')
+                propoTime.requestTotalTime()
+
+                propoTime.requestHalfList()
+                
+                print('collision:')
+                collisionTime.requestTotalTime()
+
+                collisionTime.requestHalfList()
+
+                print('display:')
+                displayTime.requestTotalTime()
+
+                displayTime.requestHalfList()
+
+                print('particle counter:')
+                particleCountTime.requestTotalTime()
+
+                particleCountTime.requestHalfList()
+
+            displayTime.recordTime()
 
 
         plt.show()
@@ -192,7 +217,7 @@ class Lattice:
 
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
-        
+        propoTime.recordTime()
         for y in range(0, self.containerSize):
             for x in range(0, self.containerSize):
                 # that if statement actually helps! (marginally)
@@ -208,6 +233,7 @@ class Lattice:
 
 
         self.lattice = newBoard
+        propoTime.recordTime()
         
     #================================================================================#
 
@@ -217,6 +243,7 @@ class Lattice:
         direction that they are approaching the center of the node from. During collide, the
         particles move from their original index, to another index, across the node if there
         is no collision."""
+        collisionTime.recordTime()
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         standardVectors = [3, 3, 3, -3, -3, -3]
         leftBounceVectors = [0, 4, 3, -3, -3, -4]
@@ -282,9 +309,62 @@ class Lattice:
                     
 
         self.lattice = newBoard
+        collisionTime.recordTime()
         
     #================================================================================#
 
+
+class Timer:
+    def __init__(self):
+        self.startingTime = 0
+        self.timesRecorder = [0]
+        self.timesSinceLastCheck = []
+
+    def startTimer(self):
+        self.startingTime = time.perf_counter()
+
+    def recordTime(self):
+        
+        timeElapsed = time.perf_counter() - self.startingTime 
+        
+        self.timesRecorder.append(timeElapsed)
+        self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
+
+    def requestTotalTime(self):
+        print(self.timesRecorder[-1])
+
+    def requestTimeList(self):
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(10):
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+
+            print('\n')
+
+    def requestHalfList(self):
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(1, 10, 2):
+                
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+
+            print('\n')
+                
 latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='random')
 
-latticeList.display_heatmap(timeStep=60, pauseBetweenSteps=.05)
+overallTime = Timer()
+propoTime = Timer()
+collisionTime = Timer()
+displayTime = Timer()
+particleCountTime = Timer()
+
+
+overallTime.startTimer()
+propoTime.startTimer()
+collisionTime.startTimer()
+displayTime.startTimer()
+particleCountTime.startTimer()
+
+latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
+
+
+
+
