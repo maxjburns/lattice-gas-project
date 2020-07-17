@@ -315,15 +315,21 @@ class Lattice:
 
 
 class Timer:
+    """Used for debugging purposes, has a few utilities which measure the time it takes for a
+    block of code to run"""
+
     def __init__(self):
         self.startingTime = 0
         self.timesRecorder = [0]
         self.timesSinceLastCheck = []
 
     def startTimer(self):
+        """Starts the initial timer, used to determine total time a program takes to run"""
         self.startingTime = time.perf_counter()
 
     def recordTime(self):
+        """Records the time state, and appends it to timesRecorder. Then appends the difference
+        in the recorded time, and the time before it, in timesSinceLastCheck."""
         
         timeElapsed = time.perf_counter() - self.startingTime 
         
@@ -331,9 +337,12 @@ class Timer:
         self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
 
     def requestTotalTime(self):
+        """Simple function which prints the last time recorded"""
         print(self.timesRecorder[-1])
 
     def requestTimeList(self):
+        """displays the recorded list of time differences, only suitable when only one recordTime function
+        is triggered in a test run.""" 
         for i in range(len(self.timesSinceLastCheck)//10):
             for x in range(10):
                 print(self.timesSinceLastCheck[i*10 + x], end=', ')
@@ -341,6 +350,9 @@ class Timer:
             print('\n')
 
     def requestHalfList(self):
+        """displays the recorded list of time differences when running one recordTime at the beginning of a
+        function, and another at the end. Skips every other value in order to only see the space between the
+        two calls of RecordTime."""
         for i in range(len(self.timesSinceLastCheck)//10):
             for x in range(1, 10, 2):
                 
