@@ -6,7 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
-import time
+
 
 
 # ----------------------------------------------------------------------------#
@@ -35,6 +35,7 @@ class Lattice:
         self.lattice = np.zeros((containerSize, containerSize, 6), np.int8)
         self.containerSize = containerSize
         self.particleNumber = particleNumber
+        self.bounceAlert = 0
 
 
         if distribution == 'tripleCollisionDemo':
@@ -164,8 +165,7 @@ class Lattice:
         im = ax.imshow(self.particleCountList, cmap='Blues')
 
         while countVar != 0:
-            if(countVar == self.containerSize):
-                start = time.time()
+            
             self.particle_counter()
             
             im.set_data(self.particleCountList)
@@ -175,9 +175,8 @@ class Lattice:
             plt.pause(pauseBetweenSteps)
             countVar -=1
             if(countVar == 1):
-                end = time.time()
-                print('total time elapsed:')
-                print(end - start)
+                
+                print('wall bounces: ' + str(self.bounceAlert))
 
 
         plt.show()
@@ -267,6 +266,7 @@ class Lattice:
                                 newBoard[y][x][z + zChange] = 1
                         
                         else:
+                            self.bounceAlert += 1
                             if x == self.containerSize - 1:
                                 zChange = rightBounceVectors[z]
 

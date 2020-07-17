@@ -35,7 +35,7 @@ class Lattice:
         self.lattice = np.zeros((containerSize, containerSize, 6), np.int8)
         self.containerSize = containerSize
         self.particleNumber = particleNumber
-
+        self.bounceAlert = 0
 
         if distribution == 'tripleCollisionDemo':
             self.manual_particles([(3, 3, 5), (5, 3, 1), (4, 5, 3), (8, 6, 0), (7, 7, 4), (9, 7, 2)])
@@ -166,13 +166,20 @@ class Lattice:
         im = ax.imshow(self.particleCountList, cmap='Blues')
 
         while countVar != 0:
-            displayTime.recordTime()
-            overallTime.recordTime()
-            self.particle_counter()
             
-            im.set_data(self.particleCountList)
-            self.propagate()
-            self.collide()
+            overallTime.recordTime()
+            self.particle_counter() # takes around the time of collide() At 200x200 around 0.3 seconds
+            
+            im.set_data(self.particleCountList) # At 200x200 around .002 seconds            
+
+            self.propagate() # takes around the time of particle_counter() At 200x200 around 0.3 seconds
+            self.collide() # takes double the time propagate() does! At 200x200 around 0.6 seconds
+            # therefore, current breakdown is: 
+            # ~50% collide()
+            # ~25% propagate()
+            # ~25% particle_counter()
+            # ~.1% im.set_data()
+
             
             plt.pause(pauseBetweenSteps)
             countVar -=1
@@ -190,20 +197,14 @@ class Lattice:
                 print('collision:')
                 collisionTime.requestTotalTime()
 
-                collisionTime.requestHalfList()
-
-                print('display:')
-                displayTime.requestTotalTime()
-
-                displayTime.requestHalfList()
+                collisionTime.requestHalfList()                
 
                 print('particle counter:')
                 particleCountTime.requestTotalTime()
 
                 particleCountTime.requestHalfList()
 
-            displayTime.recordTime()
-
+                print('wall bounces: ' + str(self.bounceAlert))
 
         plt.show()
 
@@ -294,6 +295,7 @@ class Lattice:
                                 newBoard[y][x][z + zChange] = 1
                         
                         else:
+                            self.bounceAlert += 1
                             if x == self.containerSize - 1:
                                 zChange = rightBounceVectors[z]
 
@@ -367,14 +369,12 @@ latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='ran
 overallTime = Timer()
 propoTime = Timer()
 collisionTime = Timer()
-displayTime = Timer()
 particleCountTime = Timer()
 
 
 overallTime.startTimer()
 propoTime.startTimer()
 collisionTime.startTimer()
-displayTime.startTimer()
 particleCountTime.startTimer()
 
 latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
