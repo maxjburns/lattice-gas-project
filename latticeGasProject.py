@@ -2,17 +2,12 @@
 # -*- coding: utf-8 -*-
 # spot for modifiable variables:
 
-# let's stick to "square"s right now, enter the width of the top layer:
 
-
-
-import cProfile
-
-import math
 import matplotlib.pyplot as plt
 import numpy as np
-import random
+from numpy import random
 import time
+
 
 # ----------------------------------------------------------------------------#
 
@@ -244,15 +239,14 @@ class Lattice:
 
                                 if z == 0 or z == 3:
                                     scatterPattern = random.choice([1, 2])
-                                    print('horizontal collision')
 
                                 elif z == 1 or z == 4:
                                     scatterPattern = random.choice([-1, 1])
-                                    print('backslash collision')
                 
                                 elif z == 2 or z == 5:
                                     scatterPattern = random.choice([-1, -2])
-                                    print('forwardslash collision')
+
+
                                 newBoard[y][x][z + scatterPattern] = 1
                                 newBoard[y][x][z + zChange + scatterPattern] = 1
                                 self.lattice[y][x][z] = 0
@@ -266,7 +260,6 @@ class Lattice:
                                 newBoard[y][x][z] = 1
                                 newBoard[y][x][z + 2] = 1
                                 newBoard[y][x][z + 6*(z % 2) - 2] = 1
-                                print('triple collision')
 
                             else:
                                 newBoard[y][x][z + zChange] = 1
@@ -292,6 +285,6 @@ class Lattice:
         
     #================================================================================#
 
-latticeList = Lattice(containerSize=12, particleNumber=2, distribution='tripleCollisionDemo')
+latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='random')
 
 latticeList.display_heatmap(timeStep=60, pauseBetweenSteps=.05)
