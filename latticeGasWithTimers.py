@@ -162,13 +162,15 @@ class Lattice:
 
         ax.set_title("Particle Distribution")
         fig.tight_layout()
+        self.particle_counter()
+        im = ax.imshow(self.particleCountList, cmap='Blues')
 
         while countVar != 0:
             displayTime.recordTime()
             overallTime.recordTime()
             self.particle_counter()
             
-            im = ax.imshow(self.particleCountList, cmap='Blues')
+            im.set_data(self.particleCountList)
             self.propagate()
             self.collide()
             
