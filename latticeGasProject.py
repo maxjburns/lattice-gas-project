@@ -147,7 +147,7 @@ class Lattice:
             self.propagate()
             self.collide()
             
-            plt.pause(.05)
+            plt.pause(1)
             countVar -=1
             if(countVar == 1):
                 end = time.time()
@@ -172,16 +172,16 @@ class Lattice:
         
         for y in range(0, self.containerSize):
             for x in range(0, self.containerSize):
-                # that if statement actually helps!
-                if self.particleCountList[x][y] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
+                # that if statement actually helps! (marginally)
+                if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
                     for z in range(0, 6):
                         
                         if y % 2 == 0:
                             xChange, yChange, zChange = vectorsOnEvenRow[z]
                         else:
                             xChange, yChange, zChange = vectorsOnOddRow[z]
-                        if self.lattice[x][y][z] == 1:
-                            newBoard[x + xChange][y + yChange][z + zChange] = 1
+                        if self.lattice[y][x][z] == 1:
+                            newBoard[y + yChange][x + xChange][z + zChange] = 1
 
 
         self.lattice = newBoard
@@ -206,12 +206,12 @@ class Lattice:
             for x in range(0, self.containerSize):
                 for z in range(0, 6):
                    
-                    if self.lattice[x][y][z] == 1:
+                    if self.lattice[y][x][z] == 1:
 
                         if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
                         
                             zChange = standardVectors[z]
-                            if self.lattice[x][y][z + zChange] == 1:                               
+                            if self.lattice[y][x][z + zChange] == 1:                               
 
                                 if z == 0 or z == 3:
                                     scatterPattern = random.choice([1, 2])
@@ -222,28 +222,30 @@ class Lattice:
                                 elif z == 2 or z == 5:
                                     scatterPattern = random.choice([-1, -2])
                                 
-                                newBoard[x][y][z + scatterPattern] = 1
-                                newBoard[x][y][z + zChange + scatterPattern] = 1
+                                newBoard[y][x][z + scatterPattern] = 1
+                                newBoard[y][x][z + zChange + scatterPattern] = 1
+                                self.lattice[y][x][z] = 0
+                                self.lattice[y][x][z + zChange] = 0
 
 
                             else:
-                                newBoard[x][y][z + zChange] = 1
-
-                        elif x == self.containerSize - 1:
-                            zChange = rightBounceVectors[z]
-                            newBoard[x][y][z + zChange] = 1
-
-                        elif y == self.containerSize - 1:
-                            zChange = bottomBounceVectors[z]
-                            newBoard[x][y][z + zChange] = 1
+                                newBoard[y][x][z + zChange] = 1
                         
-                        elif x == 0:
-                            zChange = leftBounceVectors[z]
-                            newBoard[x][y][z + zChange] = 1
-                        
-                        elif y == 0:
-                            zChange = topBounceVectors[z]
-                            newBoard[x][y][z + zChange] = 1
+                        else:
+                            if x == self.containerSize - 1:
+                                zChange = rightBounceVectors[z]
+
+                            elif y == self.containerSize - 1:
+                                zChange = bottomBounceVectors[z]
+                            
+                            elif x == 0:
+                                zChange = leftBounceVectors[z]
+                            
+                            elif y == 0:
+                                zChange = topBounceVectors[z]
+
+                                
+                            newBoard[y][x][z + zChange] = 1
                     
 
         self.lattice = newBoard
@@ -251,9 +253,9 @@ class Lattice:
     #================================================================================#
 
 latticeList = Lattice(containerSize=30, particleNumber=5)
-#particleInput = [(1, 1, 0), (9, 1, 3), (10, 14, 1), (12, 12, 4)]
-#latticeList.manual_particles(particleInput)
-latticeList.random_particles()
+particleInput = [(4, 4, 0), (4, 8, 3)] #, (10, 14, 1), (12, 12, 4)]
+latticeList.manual_particles(particleInput)
+#latticeList.random_particles()
 latticeList.display_heatmap(timeStep=60)
 
 #testArray = np.zeros((ROWS, COLUMNS))
