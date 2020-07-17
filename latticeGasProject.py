@@ -17,14 +17,42 @@ import time
 # ----------------------------------------------------------------------------#
 
 class Lattice:
-    """Class used to work with the lattice."""
+    """Class used to create and display the lattice.
+    
+    For Initialization:
+    containerSize refers to the length of one side of the square container.
+    particleNumber refers to the number of particles added during random distribution
+    distribution refers to the type of particle distribution.
+        
+    Currently there are three parameters for distribution:
+        
+        'random', which creates a random assortment of particles based on particleNumber
+        
+        'tripleCollisionDemo', which places six particles in the two possible orientations
+        that could produce a three-direction collision
+        
+        'doubleCollisionDemo', which places six particles in the three possible orientations
+        that could produce a two-direction collision."""
     #================================================================================#
     
-    def __init__(self, containerSize=100, particleNumber=5000):
+    def __init__(self, containerSize=100, particleNumber=5000, distribution='random'):
         
         self.lattice = np.zeros((containerSize, containerSize, 6), np.int8)
         self.containerSize = containerSize
         self.particleNumber = particleNumber
+
+
+        if distribution == 'tripleCollisionDemo':
+            self.manual_particles([(3, 3, 5), (5, 3, 1), (4, 5, 3), (8, 6, 0), (7, 7, 4), (9, 7, 2)])
+        
+        elif distribution == 'doubleCollisionDemo':    
+            self.manual_particles([(1, 1, 5), (3, 2, 2), (5, 5, 0), (5, 7, 3), (8, 2, 1), (6, 3, 4)])
+        
+        elif distribution == 'random':
+            self.random_particles()
+        
+        else:
+            self.random_particles()
 
     #================================================================================#   
      
@@ -128,7 +156,7 @@ class Lattice:
   
     #================================================================================#
 
-    def display_heatmap(self, timeStep = 50):
+    def display_heatmap(self, timeStep=50, pauseBetweenSteps=.05):
         """this displays the "container" and the particle density inside of it. runs
         propagate, then collision, and then recounts particle density."""
         countVar = timeStep
@@ -147,11 +175,11 @@ class Lattice:
             self.propagate()
             self.collide()
             
-            plt.pause(1)
+            plt.pause(pauseBetweenSteps)
             countVar -=1
             if(countVar == 1):
                 end = time.time()
-                print('total:')
+                print('total time elapsed:')
                 print(end - start)
 
 
@@ -200,6 +228,7 @@ class Lattice:
         rightBounceVectors = [3, 3, 2, 0, -2, -3]
         topBounceVectors = [3, 3, 3, -3, 1, -1]
         bottomBounceVectors = [3, 1, -1, -3, -3, -3]
+        
 
 
         for y in range(0, self.containerSize):
@@ -209,24 +238,35 @@ class Lattice:
                     if self.lattice[y][x][z] == 1:
 
                         if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
-                        
+                            
                             zChange = standardVectors[z]
                             if self.lattice[y][x][z + zChange] == 1:                               
 
                                 if z == 0 or z == 3:
                                     scatterPattern = random.choice([1, 2])
+                                    print('horizontal collision')
 
                                 elif z == 1 or z == 4:
                                     scatterPattern = random.choice([-1, 1])
+                                    print('backslash collision')
                 
                                 elif z == 2 or z == 5:
                                     scatterPattern = random.choice([-1, -2])
-                                
+                                    print('forwardslash collision')
                                 newBoard[y][x][z + scatterPattern] = 1
                                 newBoard[y][x][z + zChange + scatterPattern] = 1
                                 self.lattice[y][x][z] = 0
                                 self.lattice[y][x][z + zChange] = 0
 
+                            elif z < 3 and self.lattice[y][x][z + 2] == 1 and self.lattice[y][x][z + 6*(z % 2) - 2] == 1:
+                                
+                                self.lattice[y][x][z] = 0
+                                self.lattice[y][x][z + 2] = 0
+                                self.lattice[y][x][z + 6*(z % 2) - 2] = 0
+                                newBoard[y][x][z] = 1
+                                newBoard[y][x][z + 2] = 1
+                                newBoard[y][x][z + 6*(z % 2) - 2] = 1
+                                print('triple collision')
 
                             else:
                                 newBoard[y][x][z + zChange] = 1
@@ -252,13 +292,6 @@ class Lattice:
         
     #================================================================================#
 
-latticeList = Lattice(containerSize=30, particleNumber=5)
-particleInput = [(4, 4, 0), (4, 8, 3)] #, (10, 14, 1), (12, 12, 4)]
-latticeList.manual_particles(particleInput)
-#latticeList.random_particles()
-latticeList.display_heatmap(timeStep=60)
+latticeList = Lattice(containerSize=12, particleNumber=2, distribution='tripleCollisionDemo')
 
-#testArray = np.zeros((ROWS, COLUMNS))
-#print(np.array2string(testArray))
-#testArray[y][x] = 1
-#print(np.array2string(testArray))
+latticeList.display_heatmap(timeStep=60, pauseBetweenSteps=.05)
