@@ -52,6 +52,22 @@ class Lattice:
 
     #================================================================================#   
      
+    def __repr__(self):
+        """Creates a string version of the array, 0s denote open spots, 1s denote
+        particles"""
+        listOutput = ''
+        
+        for i in range(0, self.containerSize):
+            for x in range(0, self.containerSize):
+                listOutput += self.request_string(i,x)
+                listOutput += ' '
+            listOutput += '\n'
+
+        return listOutput
+
+    #================================================================================#
+
+
     def request_string(self, column, row):
         """Takes the target position in terms of a row and "column" and
         returns a string made from the paths around the node"""
@@ -79,19 +95,8 @@ class Lattice:
         return listOfSpots
 
     #================================================================================#
-
-    def request_pretty_list(self):
-        """Creates a string version of the array, 0s denote open spots, 1s denote
-        particles"""
-        for i in range(0, self.containerSize):
-            for x in range(0, self.containerSize):
-                print(self.request_string(i,x), end = ' ')
-            print('\n')
-
-    #================================================================================#
     
     def cell_number(self):
-
         """Finds number of cells based on containerSize"""
 
         cellNumber = self.containerSize * self.containerSize - int(self.containerSize / 2)
