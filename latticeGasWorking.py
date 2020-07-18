@@ -229,7 +229,7 @@ class Lattice:
         rightBounceVectors = [3, 3, 2, 0, -2, -3]
         topBounceVectors = [3, 3, 3, -3, 1, -1]
         bottomBounceVectors = [3, 1, -1, -3, -3, -3]
-        
+        scatterList = [(1,2), (-1,1), (-1,-2)]
 
 
         for y in range(0, self.containerSize):
@@ -243,15 +243,8 @@ class Lattice:
                             zChange = standardVectors[z]
                             if self.lattice[y][x][z + zChange] == 1:                               
 
-                                if z == 0 or z == 3:
-                                    scatterPattern = random.choice([1, 2])
-
-                                elif z == 1 or z == 4:
-                                    scatterPattern = random.choice([-1, 1])
-                
-                                elif z == 2 or z == 5:
-                                    scatterPattern = random.choice([-1, -2])
-
+                                
+                                scatterPattern = random.choice(scatterList[z])
 
                                 newBoard[y][x][z + scatterPattern] = 1
                                 newBoard[y][x][z + zChange + scatterPattern] = 1
@@ -292,6 +285,6 @@ class Lattice:
         
     #================================================================================#
 
-latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='random')
+latticeList = Lattice(containerSize=15, particleNumber=10000, distribution='doubleCollisionDemo')
 
-latticeList.display_heatmap(timeStep=60, pauseBetweenSteps=.05)
+latticeList.display_heatmap(timeStep=30, pauseBetweenSteps=1.5)

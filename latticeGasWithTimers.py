@@ -377,7 +377,7 @@ propoTime.startTimer()
 collisionTime.startTimer()
 particleCountTime.startTimer()
 
-latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
+latticeList.display_heatmap(timeStep=30, pauseBetweenSteps=.05)
 
 
 
