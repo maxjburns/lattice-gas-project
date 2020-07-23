@@ -38,6 +38,7 @@ class Lattice:
         self.distribution = distribution
         self.bounces = 0
         self.rValues = []
+        self.pValues = []
 
 
         if distribution == 'tripleCollisionDemo':
@@ -292,14 +293,14 @@ class Lattice:
     
     def simulation_stats(self):
         """Records the r value when called."""
-        pressure = self.bounces / (self.containerSize * 4)
-        volume = self.containerSize * self.containerSize
-        number = self.particleNumber
-        temperature = self.timeStep
+        self.pressure = self.bounces / (self.containerSize * 4)
+        self.volume = self.containerSize * self.containerSize
+        self.number = self.particleNumber
+        self.temperature = self.timeStep
 
 
-        self.rValues.append((pressure * volume) / (number * temperature))
-        self.rAverage = sum(self.rValues)/len(self.rValues)
+        self.rValues.append((self.pressure * self.volume) / (self.number * self.temperature))
+        self.pValues.append(self.pressure)
 
     #================================================================================#
 
@@ -322,11 +323,16 @@ class Lattice:
                 if(countVar == 0):
                     
                     self.simulation_stats()
-                    print("Trial " + str(i) + ":\nR = " + str(self.rValues[i]))
+                    print("\nTrial " + str(i) + ":\nR = " + str(self.rValues[i]))
+                    print("Pressure: " + str(self.pressure))
+                    print("Volume: " + str(self.volume))
+                    print("Number of Particles: " + str(self.particleNumber))
+                    print("Temperature: " + str(self.timeStep))
             self.reset_simulation()
 
 
-        print("Average R value: " + str(self.rAverage))
+        print("\nAverage R value: " + str(sum(self.rValues)/len(self.rValues)))
+        print("Average Pressure value: " + str(sum(self.pValues)/len(self.pValues)))
 
     #================================================================================#
 
@@ -349,6 +355,7 @@ class Lattice:
             self.random_particles()
 
     #================================================================================#
-latticeList = Lattice(containerSize=100, particleNumber=1000, distribution='random')
 
-latticeList.no_display_run(timeStep=30, numberOfRuns=10)
+latticeList = Lattice(containerSize=30, particleNumber=1500, distribution='random')
+
+latticeList.no_display_run(timeStep=10, numberOfRuns=10)
