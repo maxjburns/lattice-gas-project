@@ -35,7 +35,9 @@ class Lattice:
         self.lattice = np.zeros((containerSize, containerSize, 6), np.int8)
         self.containerSize = containerSize
         self.particleNumber = particleNumber
-        self.bounceAlert = 0
+        self.distribution = distribution
+        self.bounces = 0
+        self.rValues = []
 
 
         if distribution == 'tripleCollisionDemo':
@@ -66,7 +68,6 @@ class Lattice:
         return listOutput
 
     #================================================================================#
-
 
     def request_string(self, column, row):
         """Takes the target position in terms of a row and "column" and
@@ -162,7 +163,7 @@ class Lattice:
         propagate, then collision, and then recounts particle density."""
         countVar = timeStep
         fig, ax = plt.subplots()
-        
+        self.timeStep = timeStep
 
         ax.set_title("Particle Distribution")
         fig.tight_layout()
@@ -181,7 +182,7 @@ class Lattice:
             countVar -=1
             if(countVar == 1):
                 
-                print('wall bounces: ' + str(self.bounceAlert))
+                print('wall bounces: ' + str(self.bounces))
 
 
         plt.show()
@@ -202,15 +203,15 @@ class Lattice:
         for y in range(0, self.containerSize):
             for x in range(0, self.containerSize):
                 # that if statement actually helps! (marginally)
-                if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
-                    for z in range(0, 6):
+                #if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
+                for z in range(0, 6):
                         
-                        if y % 2 == 0:
-                            xChange, yChange, zChange = vectorsOnEvenRow[z]
-                        else:
-                            xChange, yChange, zChange = vectorsOnOddRow[z]
-                        if self.lattice[y][x][z] == 1:
-                            newBoard[y + yChange][x + xChange][z + zChange] = 1
+                    if y % 2 == 0:
+                        xChange, yChange, zChange = vectorsOnEvenRow[z]
+                    else:
+                        xChange, yChange, zChange = vectorsOnOddRow[z]
+                    if self.lattice[y][x][z] == 1:
+                        newBoard[y + yChange][x + xChange][z + zChange] = 1
 
 
         self.lattice = newBoard
@@ -264,27 +265,90 @@ class Lattice:
                                 newBoard[y][x][z + zChange] = 1
                         
                         else:
-                            self.bounceAlert += 1
+                            
                             if x == self.containerSize - 1:
                                 zChange = rightBounceVectors[z]
+                                self.bounces += 1.0
 
                             elif y == self.containerSize - 1:
                                 zChange = bottomBounceVectors[z]
+                                self.bounces += 0.5
                             
                             elif x == 0:
                                 zChange = leftBounceVectors[z]
+                                self.bounces += 1.0
                             
                             elif y == 0:
                                 zChange = topBounceVectors[z]
+                                self.bounces += 0.5
 
                                 
                             newBoard[y][x][z + zChange] = 1
                     
 
         self.lattice = newBoard
-        
+
+    #================================================================================#    
+    
+    def simulation_stats(self):
+        """Records the r value when called."""
+        pressure = self.bounces / (self.containerSize * 4)
+        volume = self.containerSize * self.containerSize
+        number = self.particleNumber
+        temperature = self.timeStep
+
+
+        self.rValues.append((pressure * volume) / (number * temperature))
+        self.rAverage = sum(self.rValues)/len(self.rValues)
+
     #================================================================================#
 
-latticeList = Lattice(containerSize=15, particleNumber=10000, distribution='doubleCollisionDemo')
+    def no_display_run(self, timeStep=50, numberOfRuns=1):
+        """this runs a simulation of the particle physics without displaying anything.
+        Runs a number of times as indicated by numberOfRuns, and displays r values."""
+        
+        
+        self.timeStep = timeStep
+        for i in range(0, numberOfRuns):
+            countVar = timeStep
+            while countVar != 0:
+                
+                
+                self.propagate()
+                self.collide()
+                
+                countVar -=1
 
-latticeList.display_heatmap(timeStep=30, pauseBetweenSteps=1.5)
+                if(countVar == 0):
+                    
+                    self.simulation_stats()
+                    print("Trial " + str(i) + ":\nR = " + str(self.rValues[i]))
+            self.reset_simulation()
+
+
+        print("Average R value: " + str(self.rAverage))
+
+    #================================================================================#
+
+    def reset_simulation(self):
+        """Wipes the board and resets bounces, then redistributes the correct number of particles."""
+        self.lattice = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
+        self.bounces = 0
+        
+
+        if self.distribution == 'tripleCollisionDemo':
+            self.manual_particles([(3, 3, 5), (5, 3, 1), (4, 5, 3), (8, 6, 0), (7, 7, 4), (9, 7, 2)])
+        
+        elif self.distribution == 'doubleCollisionDemo':    
+            self.manual_particles([(1, 1, 5), (3, 2, 2), (5, 5, 0), (5, 7, 3), (8, 2, 1), (6, 3, 4)])
+        
+        elif self.distribution == 'random':
+            self.random_particles()
+        
+        else:
+            self.random_particles()
+
+    #================================================================================#
+latticeList = Lattice(containerSize=100, particleNumber=1000, distribution='random')
+
+latticeList.no_display_run(timeStep=30, numberOfRuns=10)
