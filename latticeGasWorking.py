@@ -39,6 +39,7 @@ class Lattice:
         self.bounces = 0
         self.rValues = []
         self.pValues = []
+        self.bValues = []
 
 
         if distribution == 'tripleCollisionDemo':
@@ -159,13 +160,15 @@ class Lattice:
   
     #================================================================================#
 
-    def display_heatmap(self, timeStep=50, pauseBetweenSteps=.05):
+    def display_heatmap(self, totalTime=10, temperature=50, pauseBetweenSteps=.05):
         """this displays the "container" and the particle density inside of it. runs
         propagate, then collision, and then recounts particle density."""
-        countVar = timeStep
+        
         fig, ax = plt.subplots()
-        self.timeStep = timeStep
-
+        
+        self.totalTime = totalTime
+        self.timeStep = int(self.totalTime * np.sqrt(2 * temperature))
+        countVar = self.timeStep
         ax.set_title("Particle Distribution")
         fig.tight_layout()
         self.particle_counter()
@@ -227,10 +230,10 @@ class Lattice:
         is no collision."""
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         standardVectors = [3, 3, 3, -3, -3, -3]
-        leftBounceVectors = [0, 4, 3, -3, -3, -4]
-        rightBounceVectors = [3, 3, 2, 0, -2, -3]
-        topBounceVectors = [3, 3, 3, -3, 1, -1]
-        bottomBounceVectors = [3, 1, -1, -3, -3, -3]
+        topBounceVectors = [0, 4, 3, -3, -3, -4]
+        bottomBounceVectors = [3, 3, 2, 0, -2, -3]
+        leftBounceVectors = [3, 3, 3, -3, 1, -1]
+        rightBounceVectors = [3, 1, -1, -3, -3, -3]
         scatterList = [(1,2), (-1,1), (-1,-2)]
 
 
@@ -268,22 +271,22 @@ class Lattice:
                         else:
                             
                             if x == self.containerSize - 1:
-                                zChange = rightBounceVectors[z]
-                                self.bounces += 1.0
-
-                            elif y == self.containerSize - 1:
                                 zChange = bottomBounceVectors[z]
                                 self.bounces += 0.5
-                            
-                            elif x == 0:
-                                zChange = leftBounceVectors[z]
+
+                            elif y == self.containerSize - 1:
+                                zChange = rightBounceVectors[z]
                                 self.bounces += 1.0
                             
-                            elif y == 0:
+                            elif x == 0:
                                 zChange = topBounceVectors[z]
                                 self.bounces += 0.5
+                            
+                            elif y == 0:
+                                zChange = leftBounceVectors[z]
+                                self.bounces += 1.0
 
-                                
+                               
                             newBoard[y][x][z + zChange] = 1
                     
 
@@ -293,25 +296,27 @@ class Lattice:
     
     def simulation_stats(self):
         """Records the r value when called."""
-        self.pressure = self.bounces / (self.containerSize * 4)
-        self.volume = self.containerSize * self.containerSize
-        self.number = self.particleNumber
-        self.temperature = self.timeStep
+        
+        self.avgParticleVelocity = self.timeStep / self.totalTime
+        self.pressure = (self.bounces * 0.5 * (self.avgParticleVelocity)**2) / (self.containerSize * 4)
+        self.volume = self.containerSize ** 2
 
-
-        self.rValues.append((self.pressure * self.volume) / (self.number * self.temperature))
+        self.rValues.append((self.pressure * self.volume) / (self.particleNumber * self.temperature))
         self.pValues.append(self.pressure)
+        self.bValues.append(self.bounces)
 
     #================================================================================#
 
-    def no_display_run(self, timeStep=50, numberOfRuns=1):
+    def no_display_run(self, totalTime=.1, temperature=5000, numberOfRuns=1):
         """this runs a simulation of the particle physics without displaying anything.
         Runs a number of times as indicated by numberOfRuns, and displays r values."""
+        self.temperature = temperature
+        self.totalTime = totalTime
+        self.timeStep = int(self.totalTime * np.sqrt(2 * self.temperature))
         
-        
-        self.timeStep = timeStep
+
         for i in range(0, numberOfRuns):
-            countVar = timeStep
+            countVar = self.timeStep
             while countVar != 0:
                 
                 
@@ -323,16 +328,19 @@ class Lattice:
                 if(countVar == 0):
                     
                     self.simulation_stats()
-                    print("\nTrial " + str(i) + ":\nR = " + str(self.rValues[i]))
+                    print("\nTrial " + str(i+1) + ":\nR = " + str(self.rValues[i]))
                     print("Pressure: " + str(self.pressure))
                     print("Volume: " + str(self.volume))
                     print("Number of Particles: " + str(self.particleNumber))
-                    print("Temperature: " + str(self.timeStep))
+                    print("Temperature: " + str(self.temperature))
+                    print("Bounces: " + str(self.bounces))
+                    print("Time Steps: " + str(self.timeStep))
             self.reset_simulation()
 
-
+        
         print("\nAverage R value: " + str(sum(self.rValues)/len(self.rValues)))
         print("Average Pressure value: " + str(sum(self.pValues)/len(self.pValues)))
+        print("Average Number of Bounces: " + str(sum(self.bValues)/len(self.bValues)))
 
     #================================================================================#
 
@@ -356,6 +364,8 @@ class Lattice:
 
     #================================================================================#
 
-latticeList = Lattice(containerSize=30, particleNumber=1500, distribution='random')
+latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='random')
 
-latticeList.no_display_run(timeStep=10, numberOfRuns=10)
+latticeList.no_display_run(totalTime=1, temperature=10000, numberOfRuns=20)
+
+#latticeList.display_heatmap(totalTime=1, temperature=100000, pauseBetweenSteps=.05)
