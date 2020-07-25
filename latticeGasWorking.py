@@ -272,7 +272,7 @@ class Lattice:
                             
                             if x == self.containerSize - 1:
                                 zChange = bottomBounceVectors[z]
-                                self.bounces += 0.5
+                                self.bounces += np.sqrt(3) / 2
 
                             elif y == self.containerSize - 1:
                                 zChange = rightBounceVectors[z]
@@ -280,7 +280,7 @@ class Lattice:
                             
                             elif x == 0:
                                 zChange = topBounceVectors[z]
-                                self.bounces += 0.5
+                                self.bounces += np.sqrt(3) / 2
                             
                             elif y == 0:
                                 zChange = leftBounceVectors[z]
@@ -297,23 +297,25 @@ class Lattice:
     def simulation_stats(self):
         """Records the r value when called."""
         
-        self.avgParticleVelocity = self.timeStep / self.totalTime
-        self.pressure = (self.bounces * 0.5 * (self.avgParticleVelocity)**2) / (self.containerSize * 4)
-        self.volume = self.containerSize ** 2
+        self.avgParticleVelocity = (self.timeStep / self.totalTime) / self.containerSize
+        self.pressure = (self.bounces * 0.5 * (self.avgParticleVelocity)**2) / 4
+        self.volume = 1
+        self.rT = 0.5 * (self.avgParticleVelocity)**2
 
-        self.rValues.append((self.pressure * self.volume) / (self.particleNumber * self.temperature))
+        self.rValues.append(self.rT)
+        
         self.pValues.append(self.pressure)
         self.bValues.append(self.bounces)
 
     #================================================================================#
 
-    def no_display_run(self, totalTime=.1, temperature=5000, numberOfRuns=1):
+    def no_display_run(self, totalTime=.1, timeStep=20, numberOfRuns=1):
         """this runs a simulation of the particle physics without displaying anything.
         Runs a number of times as indicated by numberOfRuns, and displays r values."""
-        self.temperature = temperature
-        self.totalTime = totalTime
-        self.timeStep = int(self.totalTime * np.sqrt(2 * self.temperature))
         
+        self.totalTime = totalTime
+        
+        self.timeStep = timeStep
 
         for i in range(0, numberOfRuns):
             countVar = self.timeStep
@@ -328,17 +330,17 @@ class Lattice:
                 if(countVar == 0):
                     
                     self.simulation_stats()
-                    print("\nTrial " + str(i+1) + ":\nR = " + str(self.rValues[i]))
+                    print("\nTrial " + str(i+1) + ":\nrT = " + str(self.rValues[i]))
                     print("Pressure: " + str(self.pressure))
                     print("Volume: " + str(self.volume))
                     print("Number of Particles: " + str(self.particleNumber))
-                    print("Temperature: " + str(self.temperature))
+                    #print("Temperature: " + str(self.temperature))
                     print("Bounces: " + str(self.bounces))
                     print("Time Steps: " + str(self.timeStep))
             self.reset_simulation()
 
         
-        print("\nAverage R value: " + str(sum(self.rValues)/len(self.rValues)))
+        print("\nAverage rT value: " + str(sum(self.rValues)/len(self.rValues)))
         print("Average Pressure value: " + str(sum(self.pValues)/len(self.pValues)))
         print("Average Number of Bounces: " + str(sum(self.bValues)/len(self.bValues)))
 
@@ -364,8 +366,8 @@ class Lattice:
 
     #================================================================================#
 
-latticeList = Lattice(containerSize=100, particleNumber=10000, distribution='random')
+latticeList = Lattice(containerSize=50, particleNumber=5000, distribution='random')
 
-latticeList.no_display_run(totalTime=1, temperature=10000, numberOfRuns=20)
+latticeList.no_display_run(totalTime=1, timeStep=20, numberOfRuns=5)
 
 #latticeList.display_heatmap(totalTime=1, temperature=100000, pauseBetweenSteps=.05)
