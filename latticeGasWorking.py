@@ -398,13 +398,40 @@ class Lattice:
 
     #================================================================================#
 
+    def plot_rT(self, tStepMin=5, tStepMax=105, pointNumber=9, n=5, style="linear"):
+        fig = plt.figure()
+        xList = np.linspace(tStepMin, tStepMax, pointNumber)
+        
+        minRTValues = []
+        maxRTValues = []
+        avgRTValues = []
+
+        for x in xList:
+            latticeList.no_display_run(timeStep=x, numberOfRuns=n)
+            
+            maxRTValues.append(np.amax(self.rValues))
+            minRTValues.append(np.amin(self.rValues))
+            avgRTValues.append(np.average(self.rValues))
+            self.rValues = []
+            self.pValues = []
+            self.bValues = []
+
+        yerr = [minRTValues, maxRTValues]
+        print(yerr)
+        yList = avgRTValues
+        
+        plt.errorbar(xList, yList, yerr=yerr, fmt='o', ecolor='red')
+
+        plt.legend(loc='upper left')
+
+        plt.show()
 
 
 
 
-latticeList = Lattice(containerSize=500, particleNumber=50, distribution='random')
-
-latticeList.no_display_run(timeStep=10, numberOfRuns=10)
+latticeList = Lattice(containerSize=200, particleNumber=50, distribution='random')
+latticeList.plot_rT()
+#latticeList.no_display_run(timeStep=10, numberOfRuns=10)
 
 #latticeList.display_heatmap(timeStep=150, pauseBetweenSteps=.05)
 
