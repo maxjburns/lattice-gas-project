@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
+import time
 
 
 
@@ -160,14 +161,14 @@ class Lattice:
   
     #================================================================================#
 
-    def display_heatmap(self, totalTime=10, temperature=50, pauseBetweenSteps=.05):
+    def display_heatmap(self, timeStep=50, pauseBetweenSteps=.05):
         """this displays the "container" and the particle density inside of it. runs
         propagate, then collision, and then recounts particle density."""
         
         fig, ax = plt.subplots()
         
-        self.totalTime = totalTime
-        self.timeStep = int(self.totalTime * np.sqrt(2 * temperature))
+        self.timeStep = timeStep
+        
         countVar = self.timeStep
         ax.set_title("Particle Distribution")
         fig.tight_layout()
@@ -179,7 +180,9 @@ class Lattice:
             self.particle_counter()
             
             im.set_data(self.particleCountList)
+            self.find_particles()
             self.propagate()
+            self.find_particles()
             self.collide()
             
             plt.pause(pauseBetweenSteps)
@@ -204,7 +207,8 @@ class Lattice:
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
         
-        for y in range(0, self.containerSize):
+        for y in self.yList:
+            
             for x in range(0, self.containerSize):
                 # that if statement actually helps! (marginally)
                 #if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
@@ -236,8 +240,10 @@ class Lattice:
         rightBounceVectors = [3, 1, -1, -3, -3, -3]
         scatterList = [(1,2), (-1,1), (-1,-2)]
 
-
-        for y in range(0, self.containerSize):
+        
+        for y in self.yList:
+            
+            
             for x in range(0, self.containerSize):
                 for z in range(0, 6):
                    
@@ -304,10 +310,10 @@ class Lattice:
     def simulation_stats(self):
         """Records the r value when called."""
         
-        self.avgParticleVelocity = (self.timeStep / self.totalTime) / self.containerSize
-        self.pressure = (self.bounces * 0.5 * (self.avgParticleVelocity)**2) / 4
-        self.volume = 1
-        self.rT = 0.5 * (self.avgParticleVelocity)**2
+        self.avgParticleVelocity = self.timeStep / (self.containerSize - 1)
+        self.pressure = (self.bounces * (self.avgParticleVelocity)**2) / 8
+        
+        self.rT = self.pressure / self.particleNumber
 
         self.rValues.append(self.rT)
         
@@ -316,21 +322,30 @@ class Lattice:
 
     #================================================================================#
 
-    def no_display_run(self, totalTime=.1, timeStep=20, numberOfRuns=1):
+    def no_display_run(self, timeStep=20, numberOfRuns=1):
         """this runs a simulation of the particle physics without displaying anything.
         Runs a number of times as indicated by numberOfRuns, and displays r values."""
         
-        self.totalTime = totalTime
+        
         
         self.timeStep = timeStep
 
         for i in range(0, numberOfRuns):
             countVar = self.timeStep
             while countVar != 0:
-                
-                
+                findPartTime.recordTime()
+                self.find_particles()
+                findPartTime.recordTime()
+
+                propoTime.recordTime()
                 self.propagate()
+                propoTime.recordTime()
+
+                self.find_particles()
+
+                collisionTime.recordTime()
                 self.collide()
+                collisionTime.recordTime()
                 
                 countVar -=1
 
@@ -339,11 +354,29 @@ class Lattice:
                     self.simulation_stats()
                     print("\nTrial " + str(i+1) + ":\nrT = " + str(self.rValues[i]))
                     print("Pressure: " + str(self.pressure))
-                    print("Volume: " + str(self.volume))
+                    print("Volume: 1")
                     print("Number of Particles: " + str(self.particleNumber))
                     #print("Temperature: " + str(self.temperature))
                     print("Bounces: " + str(self.bounces))
                     print("Time Steps: " + str(self.timeStep))
+
+                    
+                    print('propagate:')
+                    propoTime.requestTotalTime()
+
+                    
+                    
+                    print('collision:')
+                    collisionTime.requestTotalTime()
+
+                                    
+
+                    print('findPartTime counter:')
+                    findPartTime.requestTotalTime()
+
+                    
+
+
             self.reset_simulation()
 
         
@@ -373,8 +406,82 @@ class Lattice:
 
     #================================================================================#
 
-latticeList = Lattice(containerSize=50, particleNumber=5000, distribution='random')
+    def find_particles(self):
+        fullSpotList = np.any(self.lattice, axis=2)
+        tfyList = np.any(fullSpotList, axis=1)
+        indexList = np.where(tfyList == 1)
+        self.yList = indexList[0]
+        
 
-latticeList.no_display_run(totalTime=1, timeStep=20, numberOfRuns=5)
+    #================================================================================#
+        
+class Timer:
+    """Used for debugging purposes, has a few utilities which measure the time it takes for a
+    block of code to run"""
 
-#latticeList.display_heatmap(totalTime=1, temperature=100000, pauseBetweenSteps=.05)
+    def __init__(self):
+        self.startingTime = 0
+        self.timesRecorder = [0]
+        self.timesSinceLastCheck = []
+
+    def startTimer(self):
+        """Starts the initial timer, used to determine total time a program takes to run"""
+        self.startingTime = time.perf_counter()
+
+    def recordTime(self):
+        """Records the time state, and appends it to timesRecorder. Then appends the difference
+        in the recorded time, and the time before it, in timesSinceLastCheck."""
+        
+        timeElapsed = time.perf_counter() - self.startingTime 
+        
+        self.timesRecorder.append(timeElapsed)
+        self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
+
+    def requestTotalTime(self):
+        """Simple function which prints the last time recorded"""
+        print(sum(self.requestHalfList()))
+
+    def requestTimeList(self):
+        """displays the recorded list of time differences, only suitable when only one recordTime function
+        is triggered in a test run.""" 
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(10):
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+
+            print('\n')
+
+    def requestHalfList(self):
+        """displays the recorded list of time differences when running one recordTime at the beginning of a
+        function, and another at the end. Skips every other value in order to only see the space between the
+        two calls of RecordTime."""
+        outputList = []
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(1, 10, 2):
+                
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+                outputList.append(self.timesSinceLastCheck[i*10 + x])
+            print('\n')   
+        return outputList  
+
+
+findPartTime = Timer()
+overallTime = Timer()
+propoTime = Timer()
+collisionTime = Timer()
+particleCountTime = Timer()
+
+
+latticeList = Lattice(containerSize=500, particleNumber=10, distribution='random')
+
+findPartTime.startTimer()
+overallTime.startTimer()
+propoTime.startTimer()
+collisionTime.startTimer()
+particleCountTime.startTimer()
+
+
+
+latticeList.no_display_run(timeStep=150, numberOfRuns=5)
+
+#latticeList.display_heatmap(timeStep=20, pauseBetweenSteps=.05)
+
