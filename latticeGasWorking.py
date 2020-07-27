@@ -270,21 +270,28 @@ class Lattice:
                         
                         else:
                             
-                            if x == self.containerSize - 1:
+                            if x == self.containerSize - 1: # bottom
                                 zChange = bottomBounceVectors[z]
                                 self.bounces += np.sqrt(3) / 2
+                                
 
-                            elif y == self.containerSize - 1:
+                            elif y == self.containerSize - 1: # right side
                                 zChange = rightBounceVectors[z]
-                                self.bounces += 1.0
+                                if i == 0:
+                                    self.bounces += 1.0
+                                else:
+                                    self.bounces += 0.5
                             
-                            elif x == 0:
+                            elif x == 0: # top
                                 zChange = topBounceVectors[z]
                                 self.bounces += np.sqrt(3) / 2
                             
-                            elif y == 0:
+                            elif y == 0: # left side
                                 zChange = leftBounceVectors[z]
-                                self.bounces += 1.0
+                                if i == 3:
+                                    self.bounces += 1.0
+                                else:
+                                    self.bounces += 0.5
 
                                
                             newBoard[y][x][z + zChange] = 1
