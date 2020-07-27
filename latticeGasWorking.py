@@ -277,7 +277,7 @@ class Lattice:
 
                             elif y == self.containerSize - 1: # right side
                                 zChange = rightBounceVectors[z]
-                                if i == 0:
+                                if z == 0:
                                     self.bounces += 1.0
                                 else:
                                     self.bounces += 0.5
@@ -288,7 +288,7 @@ class Lattice:
                             
                             elif y == 0: # left side
                                 zChange = leftBounceVectors[z]
-                                if i == 3:
+                                if z == 3:
                                     self.bounces += 1.0
                                 else:
                                     self.bounces += 0.5
