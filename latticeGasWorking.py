@@ -209,7 +209,7 @@ class Lattice:
         
         for y in self.yList:
             
-            for x in range(0, self.containerSize):
+            for x in self.xList:
                 # that if statement actually helps! (marginally)
                 #if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
                 for z in range(0, 6):
@@ -242,9 +242,7 @@ class Lattice:
 
         
         for y in self.yList:
-            
-            
-            for x in range(0, self.containerSize):
+            for x in self.xList:
                 for z in range(0, 6):
                    
                     if self.lattice[y][x][z] == 1:
@@ -407,10 +405,18 @@ class Lattice:
     #================================================================================#
 
     def find_particles(self):
+        self.xList = []
         fullSpotList = np.any(self.lattice, axis=2)
+
         tfyList = np.any(fullSpotList, axis=1)
         indexList = np.where(tfyList == 1)
         self.yList = indexList[0]
+
+        for y in self.yList:      
+            xIndexList = np.where(fullSpotList[y] == 1)
+            self.xList.append(xIndexList[0][0])
+
+        
         
 
     #================================================================================#
@@ -471,7 +477,7 @@ collisionTime = Timer()
 particleCountTime = Timer()
 
 
-latticeList = Lattice(containerSize=500, particleNumber=10, distribution='random')
+latticeList = Lattice(containerSize=500, particleNumber=3, distribution='random')
 
 findPartTime.startTimer()
 overallTime.startTimer()
@@ -481,7 +487,7 @@ particleCountTime.startTimer()
 
 
 
-latticeList.no_display_run(timeStep=150, numberOfRuns=5)
+latticeList.no_display_run(timeStep=50, numberOfRuns=1)
 
 #latticeList.display_heatmap(timeStep=20, pauseBetweenSteps=.05)
 
