@@ -381,6 +381,10 @@ class Lattice:
     #================================================================================#
 
     def find_particles(self):
+        """Checks rows and columns for particles, and makes lists of the index positions
+        where particles are found. When this method searches the columns, it only checks
+        rows where a particle was found."""
+        
         self.xList = []
         fullSpotList = np.any(self.lattice, axis=2)
 
@@ -388,16 +392,19 @@ class Lattice:
         indexList = np.where(tfyList == 1)
         self.yList = indexList[0]
 
-        for y in self.yList:      
-            xIndexList = np.where(fullSpotList[y] == 1)
-            self.xList.append(xIndexList[0][0])
+        for i in self.yList:      
+            xIndexList = np.where(fullSpotList[i] == 1)
+            self.xList.extend(xIndexList[0])
 
     #================================================================================#
 
 
-latticeList = Lattice(containerSize=500, particleNumber=100, distribution='random')
 
-latticeList.no_display_run(timeStep=500, numberOfRuns=10)
 
-#latticeList.display_heatmap(timeStep=20, pauseBetweenSteps=.05)
+
+latticeList = Lattice(containerSize=500, particleNumber=50, distribution='random')
+
+latticeList.no_display_run(timeStep=10, numberOfRuns=10)
+
+#latticeList.display_heatmap(timeStep=150, pauseBetweenSteps=.05)
 
