@@ -331,19 +331,12 @@ class Lattice:
         for i in range(0, numberOfRuns):
             countVar = self.timeStep
             while countVar != 0:
-                findPartTime.recordTime()
-                self.find_particles()
-                findPartTime.recordTime()
 
-                propoTime.recordTime()
+                self.find_particles()
                 self.propagate()
-                propoTime.recordTime()
 
                 self.find_particles()
-
-                collisionTime.recordTime()
                 self.collide()
-                collisionTime.recordTime()
                 
                 countVar -=1
 
@@ -357,23 +350,6 @@ class Lattice:
                     #print("Temperature: " + str(self.temperature))
                     print("Bounces: " + str(self.bounces))
                     print("Time Steps: " + str(self.timeStep))
-
-                    
-                    print('propagate:')
-                    propoTime.requestTotalTime()
-
-                    
-                    
-                    print('collision:')
-                    collisionTime.requestTotalTime()
-
-                                    
-
-                    print('findPartTime counter:')
-                    findPartTime.requestTotalTime()
-
-                    
-
 
             self.reset_simulation()
 
@@ -416,78 +392,12 @@ class Lattice:
             xIndexList = np.where(fullSpotList[y] == 1)
             self.xList.append(xIndexList[0][0])
 
-        
-        
-
     #================================================================================#
-        
-class Timer:
-    """Used for debugging purposes, has a few utilities which measure the time it takes for a
-    block of code to run"""
-
-    def __init__(self):
-        self.startingTime = 0
-        self.timesRecorder = [0]
-        self.timesSinceLastCheck = []
-
-    def startTimer(self):
-        """Starts the initial timer, used to determine total time a program takes to run"""
-        self.startingTime = time.perf_counter()
-
-    def recordTime(self):
-        """Records the time state, and appends it to timesRecorder. Then appends the difference
-        in the recorded time, and the time before it, in timesSinceLastCheck."""
-        
-        timeElapsed = time.perf_counter() - self.startingTime 
-        
-        self.timesRecorder.append(timeElapsed)
-        self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
-
-    def requestTotalTime(self):
-        """Simple function which prints the last time recorded"""
-        print(sum(self.requestHalfList()))
-
-    def requestTimeList(self):
-        """displays the recorded list of time differences, only suitable when only one recordTime function
-        is triggered in a test run.""" 
-        for i in range(len(self.timesSinceLastCheck)//10):
-            for x in range(10):
-                print(self.timesSinceLastCheck[i*10 + x], end=', ')
-
-            print('\n')
-
-    def requestHalfList(self):
-        """displays the recorded list of time differences when running one recordTime at the beginning of a
-        function, and another at the end. Skips every other value in order to only see the space between the
-        two calls of RecordTime."""
-        outputList = []
-        for i in range(len(self.timesSinceLastCheck)//10):
-            for x in range(1, 10, 2):
-                
-                print(self.timesSinceLastCheck[i*10 + x], end=', ')
-                outputList.append(self.timesSinceLastCheck[i*10 + x])
-            print('\n')   
-        return outputList  
 
 
-findPartTime = Timer()
-overallTime = Timer()
-propoTime = Timer()
-collisionTime = Timer()
-particleCountTime = Timer()
+latticeList = Lattice(containerSize=500, particleNumber=100, distribution='random')
 
-
-latticeList = Lattice(containerSize=500, particleNumber=3, distribution='random')
-
-findPartTime.startTimer()
-overallTime.startTimer()
-propoTime.startTimer()
-collisionTime.startTimer()
-particleCountTime.startTimer()
-
-
-
-latticeList.no_display_run(timeStep=50, numberOfRuns=1)
+latticeList.no_display_run(timeStep=500, numberOfRuns=10)
 
 #latticeList.display_heatmap(timeStep=20, pauseBetweenSteps=.05)
 
