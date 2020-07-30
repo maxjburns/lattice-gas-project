@@ -210,8 +210,7 @@ class Lattice:
         for y in self.yList:
             
             for x in self.xList:
-                # that if statement actually helps! (marginally)
-                #if self.particleCountList[y][x] > 0: # just for efficiency, many spaces have no particles, so no need to check all their spaces
+                
                 for z in range(0, 6):
                         
                     if y % 2 == 0:
@@ -219,6 +218,8 @@ class Lattice:
                     else:
                         xChange, yChange, zChange = vectorsOnOddRow[z]
                     if self.lattice[y][x][z] == 1:
+                        
+                        
                         newBoard[y + yChange][x + xChange][z + zChange] = 1
 
 
@@ -339,7 +340,7 @@ class Lattice:
                 self.collide()
                 
                 countVar -=1
-
+                
                 if(countVar == 0):
                     
                     self.simulation_stats()
@@ -350,6 +351,7 @@ class Lattice:
                     #print("Temperature: " + str(self.temperature))
                     print("Bounces: " + str(self.bounces))
                     print("Time Steps: " + str(self.timeStep))
+                    print("containerSize: " + str(self.containerSize))
 
             self.reset_simulation()
 
@@ -387,50 +389,97 @@ class Lattice:
         
         self.xList = []
         fullSpotList = np.any(self.lattice, axis=2)
-
+        
         tfyList = np.any(fullSpotList, axis=1)
         indexList = np.where(tfyList == 1)
         self.yList = indexList[0]
-
+        
         for i in self.yList:      
             xIndexList = np.where(fullSpotList[i] == 1)
             self.xList.extend(xIndexList[0])
+            
 
     #================================================================================#
 
-    def plot_rT(self, tStepMin=5, tStepMax=105, pointNumber=9, n=5, style="linear"):
+    def plot_rT(self, testValue='tStep', minValue=100, maxValue=500, pointNumber=15, n=5, style="linear", tStep=30):
+        """Graphs the rT values produced by the simulation.
+        
+        INPUT:
+        -testValue is the value that will correspond to the x axis, and be varied. Expects a string 'tStep', 
+        'containerSize', or 'particleNumber'.
+        -minValue and maxValue expect ints, and correspond to the first mapped x value, and the final x value.
+        -pointNumber expects an int, and designates how many points will be graphed.
+        -n expects an int, and designates how many times a simulation is run with identical conditions, before the 
+        results are averaged.
+        -style expects a string, either "linear" or "logarithmic", and refers to the y axis scaling
+        -tStep is only used when timeStep is not the value being tested, it determines the number of time steps each
+        iteration, when testing containerSize or particleNumber.
+
+        OUTPUT:
+        -prints information about each iteration to the terminal, once finished, the intended graph is displayed."""
+
         fig = plt.figure()
-        xList = np.linspace(tStepMin, tStepMax, pointNumber)
+        ax = fig.add_subplot()
+        xList = np.linspace(minValue, maxValue, pointNumber)
+        xList = [round(x) for x in xList]
+        for i in range(len(xList)):
+            xList[i] += xList[i] % 2
         
         minRTValues = []
         maxRTValues = []
         avgRTValues = []
+        if testValue == 'tstep':
+            for x in xList:
+                latticeList.no_display_run(timeStep=x, numberOfRuns=n)
+                
+                maxRTValues.append(np.amax(self.rValues))
+                minRTValues.append(np.amin(self.rValues))
+                avgRTValues.append(np.average(self.rValues))
+                self.rValues = []
+                self.pValues = []
+                self.bValues = []
+        else:
 
-        for x in xList:
-            latticeList.no_display_run(timeStep=x, numberOfRuns=n)
+            for x in xList:
+                
+                if testValue == 'containerSize':
+                    self.containerSize = x
+                    self.reset_simulation()
             
-            maxRTValues.append(np.amax(self.rValues))
-            minRTValues.append(np.amin(self.rValues))
-            avgRTValues.append(np.average(self.rValues))
-            self.rValues = []
-            self.pValues = []
-            self.bValues = []
+                elif testValue == 'particleNumber':
+                    self.particleNumber = x
+                    self.reset_simulation()
+
+
+                latticeList.no_display_run(timeStep=tStep, numberOfRuns=n)
+                
+                maxRTValues.append(np.amax(self.rValues))
+                minRTValues.append(np.amin(self.rValues))
+                avgRTValues.append(np.average(self.rValues))
+                self.rValues = []
+                self.pValues = []
+                self.bValues = []
 
         yerr = [minRTValues, maxRTValues]
-        print(yerr)
+        
         yList = avgRTValues
         
         plt.errorbar(xList, yList, yerr=yerr, fmt='o', ecolor='red')
-
+        ax.legend([testValue + "vs rT"])
+        ax.set_ylabel("rT")
+        ax.set_xlabel(testValue)
         plt.legend(loc='upper left')
+        if style == 'logarithmic':
+            ax.set_yscale('log')
 
         plt.show()
 
+    #================================================================================#
 
 
 
-latticeList = Lattice(containerSize=200, particleNumber=50, distribution='random')
-latticeList.plot_rT()
+latticeList = Lattice(containerSize=200, particleNumber=80, distribution='random')
+latticeList.plot_rT(testValue='particleNumber', minValue=10, maxValue=100, pointNumber=12, n=8, style="logarithmic", tStep=40)
 #latticeList.no_display_run(timeStep=10, numberOfRuns=10)
 
 #latticeList.display_heatmap(timeStep=150, pauseBetweenSteps=.05)
