@@ -41,6 +41,7 @@ class Lattice:
         self.rValues = []
         self.pValues = []
         self.bValues = []
+        
 
 
         if distribution == 'tripleCollisionDemo':
@@ -114,7 +115,8 @@ class Lattice:
         assumed to be moving away from the center of the parent node."""
 
         assert self.particleNumber <= self.cell_number() * 6
-
+        
+        self.coordList = []
         particlesRemaining = self.particleNumber
         
         # the following while loop attempts to place a particle each iteration, if the spot
@@ -124,8 +126,8 @@ class Lattice:
         while particlesRemaining != 0:
             
             # these randomly select a row and column
-            randomColumn = random.randint(1, self.containerSize-2)
-            randomRow = random.randint(1, self.containerSize-2)
+            randomColumn = random.randint(1, self.containerSize-1)
+            randomRow = random.randint(1, self.containerSize-1)
             openSpots = self.spots_remaining(randomColumn, randomRow)
 
             
@@ -134,7 +136,9 @@ class Lattice:
             if len(openSpots) > 0:
                 positionChosen = random.choice(openSpots)
                 self.lattice[randomRow][randomColumn][positionChosen] = 1
-
+                
+                self.coordList.append([randomRow, randomColumn, [positionChosen]])
+                
                 particlesRemaining -= 1
 
     #================================================================================#
@@ -174,15 +178,16 @@ class Lattice:
         fig.tight_layout()
         self.particle_counter()
         im = ax.imshow(self.particleCountList, cmap='Blues')
+        
 
-        while countVar != 0:
+        while countVar > 0:
             
             self.particle_counter()
             
             im.set_data(self.particleCountList)
-            self.find_particles()
+            
             self.propagate()
-            self.find_particles()
+            
             self.collide()
             
             plt.pause(pauseBetweenSteps)
@@ -202,28 +207,33 @@ class Lattice:
         propagate, particles are moving away from the central node, at the end,
         they are moved and considered to be moving away."""
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
-
-
+        newCoordList = []
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
         
-        for y in self.yList:
+        for coord in self.coordList:
             
-            for x in self.xList:
+            
+            y, x, zVals = coord
+            zStorage = []
+            for z in zVals:  
                 
-                for z in range(0, 6):
-                        
-                    if y % 2 == 0:
-                        xChange, yChange, zChange = vectorsOnEvenRow[z]
-                    else:
-                        xChange, yChange, zChange = vectorsOnOddRow[z]
-                    if self.lattice[y][x][z] == 1:
-                        
-                        
-                        newBoard[y + yChange][x + xChange][z + zChange] = 1
-
-
+                if y % 2 == 0:
+                    xChange, yChange, zChange = vectorsOnEvenRow[z]
+                else:
+                    xChange, yChange, zChange = vectorsOnOddRow[z]
+    
+                newBoard[y + yChange][x + xChange][z + zChange] = 1
+                zStorage.append(z + zChange)
+                
+            
+            newCoordList.append([y + yChange, x + xChange, zStorage])
+            
+        self.coordList = newCoordList
+        
         self.lattice = newBoard
+        
+        
         
     #================================================================================#
 
@@ -233,76 +243,83 @@ class Lattice:
         direction that they are approaching the center of the node from. During collide, the
         particles move from their original index, to another index, across the node if there
         is no collision."""
+        newCoordList = []
         newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         standardVectors = [3, 3, 3, -3, -3, -3]
         topBounceVectors = [0, 4, 3, -3, -3, -4]
         bottomBounceVectors = [3, 3, 2, 0, -2, -3]
         leftBounceVectors = [3, 3, 3, -3, 1, -1]
         rightBounceVectors = [3, 1, -1, -3, -3, -3]
-        scatterList = [(1,2), (-1,1), (-1,-2)]
+        scatterList = [(1,2), (-1,1), (-1,-2), (1,2), (-1,1), (-1,-2)]
 
         
-        for y in self.yList:
-            for x in self.xList:
-                for z in range(0, 6):
-                   
-                    if self.lattice[y][x][z] == 1:
+        for coord in self.coordList:
+            y, x, zVals = coord  
+            zStorage = []
 
-                        if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
-                            
-                            zChange = standardVectors[z]
-                            if self.lattice[y][x][z + zChange] == 1:                               
-
+            for z in zVals:
+                if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
                                 
-                                scatterPattern = random.choice(scatterList[z])
+                    zChange = standardVectors[z]
+                    if self.lattice[y][x][z + zChange] == 1:                               
+                                   
+                        scatterPattern = random.choice(scatterList[z])
 
-                                newBoard[y][x][z + scatterPattern] = 1
-                                newBoard[y][x][z + zChange + scatterPattern] = 1
-                                self.lattice[y][x][z] = 0
-                                self.lattice[y][x][z + zChange] = 0
+                        newBoard[y][x][z + scatterPattern] = 1
+                        newBoard[y][x][z + zChange + scatterPattern] = 1
+                        self.lattice[y][x][z] = 0
+                        self.lattice[y][x][z + zChange] = 0
+                       
 
-                            elif z < 3 and self.lattice[y][x][z + 2] == 1 and self.lattice[y][x][z + 6*(z % 2) - 2] == 1:
-                                
-                                self.lattice[y][x][z] = 0
-                                self.lattice[y][x][z + 2] = 0
-                                self.lattice[y][x][z + 6*(z % 2) - 2] = 0
-                                newBoard[y][x][z] = 1
-                                newBoard[y][x][z + 2] = 1
-                                newBoard[y][x][z + 6*(z % 2) - 2] = 1
-
-                            else:
-                                newBoard[y][x][z + zChange] = 1
+                    elif z < 3 and self.lattice[y][x][z + 2] == 1 and self.lattice[y][x][z + 6*(z % 2) - 2] == 1:
+                                    
+                        self.lattice[y][x][z] = 0
+                        self.lattice[y][x][z + 2] = 0
+                        self.lattice[y][x][z + 6*(z % 2) - 2] = 0
+                        newBoard[y][x][z] = 1
+                        newBoard[y][x][z + 2] = 1
+                        newBoard[y][x][z + 6*(z % 2) - 2] = 1
                         
-                        else:
+
+                    else:
+                        newBoard[y][x][z + zChange] = 1
+                        
                             
-                            if x == self.containerSize - 1: # bottom
-                                zChange = bottomBounceVectors[z]
-                                self.bounces += np.sqrt(3) / 2
+                else:
                                 
+                    if x == self.containerSize - 1: # bottom
+                        zChange = bottomBounceVectors[z]
+                        self.bounces += np.sqrt(3) / 2
+                                    
 
-                            elif y == self.containerSize - 1: # right side
-                                zChange = rightBounceVectors[z]
-                                if z == 0:
-                                    self.bounces += 1.0
-                                else:
-                                    self.bounces += 0.5
-                            
-                            elif x == 0: # top
-                                zChange = topBounceVectors[z]
-                                self.bounces += np.sqrt(3) / 2
-                            
-                            elif y == 0: # left side
-                                zChange = leftBounceVectors[z]
-                                if z == 3:
-                                    self.bounces += 1.0
-                                else:
-                                    self.bounces += 0.5
+                    elif y == self.containerSize - 1: # right side
+                        zChange = rightBounceVectors[z]
+                        if z == 0:
+                            self.bounces += 1.0
+                        else:
+                            self.bounces += 0.5
+                                
+                    elif x == 0: # top
+                        zChange = topBounceVectors[z]
+                        self.bounces += np.sqrt(3) / 2
+                                
+                    elif y == 0: # left side
+                        zChange = leftBounceVectors[z]
+                        if z == 3:
+                            self.bounces += 1.0
+                        else:
+                            self.bounces += 0.5
 
-                               
-                            newBoard[y][x][z + zChange] = 1
-                    
+                                
+                    newBoard[y][x][z + zChange] = 1
 
+                zStorage.append(z + zChange)        
+            newCoordList.append([y, x, zStorage])
+        self.coordList = newCoordList
         self.lattice = newBoard
+        
+        
+        
 
     #================================================================================#    
     
@@ -325,19 +342,23 @@ class Lattice:
         """this runs a simulation of the particle physics without displaying anything.
         Runs a number of times as indicated by numberOfRuns, and displays r values."""
         
-        
+        overallTime.recordTime()
         
         self.timeStep = timeStep
-
+        
+        
         for i in range(0, numberOfRuns):
             countVar = self.timeStep
-            while countVar != 0:
-
-                self.find_particles()
+            
+            while countVar > 0:
+                
+                propoTime.recordTime()
                 self.propagate()
-
-                self.find_particles()
+                propoTime.recordTime()
+                
+                collisionTime.recordTime()
                 self.collide()
+                collisionTime.recordTime()
                 
                 countVar -=1
                 
@@ -353,12 +374,24 @@ class Lattice:
                     print("Time Steps: " + str(self.timeStep))
                     print("containerSize: " + str(self.containerSize))
 
+                    print('propagate:')
+                    propoTime.requestTotalTime()
+
+
+                    print('collision:')
+                    collisionTime.requestTotalTime()
+
             self.reset_simulation()
 
         
         print("\nAverage rT value: " + str(sum(self.rValues)/len(self.rValues)))
         print("Average Pressure value: " + str(sum(self.pValues)/len(self.pValues)))
         print("Average Number of Bounces: " + str(sum(self.bValues)/len(self.bValues)))
+
+        overallTime.recordTime()
+
+        print('overall:')
+        overallTime.requestTotalTime()
 
     #================================================================================#
 
@@ -379,25 +412,6 @@ class Lattice:
         
         else:
             self.random_particles()
-
-    #================================================================================#
-
-    def find_particles(self):
-        """Checks rows and columns for particles, and makes lists of the index positions
-        where particles are found. When this method searches the columns, it only checks
-        rows where a particle was found."""
-        
-        self.xList = []
-        fullSpotList = np.any(self.lattice, axis=2)
-        
-        tfyList = np.any(fullSpotList, axis=1)
-        indexList = np.where(tfyList == 1)
-        self.yList = indexList[0]
-        
-        for i in self.yList:      
-            xIndexList = np.where(fullSpotList[i] == 1)
-            self.xList.extend(xIndexList[0])
-            
 
     #================================================================================#
 
@@ -476,11 +490,74 @@ class Lattice:
 
     #================================================================================#
 
+class Timer:
+    """Used for debugging purposes, has a few utilities which measure the time it takes for a
+    block of code to run"""
+
+    def __init__(self):
+        self.startingTime = 0
+        self.timesRecorder = [0]
+        self.timesSinceLastCheck = []
+
+    def startTimer(self):
+        """Starts the initial timer, used to determine total time a program takes to run"""
+        self.startingTime = time.perf_counter()
+
+    def recordTime(self):
+        """Records the time state, and appends it to timesRecorder. Then appends the difference
+        in the recorded time, and the time before it, in timesSinceLastCheck."""
+
+        timeElapsed = time.perf_counter() - self.startingTime 
+
+        self.timesRecorder.append(timeElapsed)
+        self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
+
+    def requestTotalTime(self):
+        """Simple function which prints the last time recorded"""
+        print(sum(self.requestHalfList()))
+
+    def requestTimeList(self):
+        """displays the recorded list of time differences, only suitable when only one recordTime function
+        is triggered in a test run.""" 
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(10):
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+
+            print('\n')
+
+    def requestHalfList(self):
+        """displays the recorded list of time differences when running one recordTime at the beginning of a
+        function, and another at the end. Skips every other value in order to only see the space between the
+        two calls of RecordTime."""
+        outputList = []
+        for i in range(len(self.timesSinceLastCheck)//10):
+            for x in range(1, 10, 2):
+
+                print(self.timesSinceLastCheck[i*10 + x], end=', ')
+                outputList.append(self.timesSinceLastCheck[i*10 + x])
+            print('\n')   
+        return outputList  
+                
 
 
-latticeList = Lattice(containerSize=200, particleNumber=80, distribution='random')
-latticeList.plot_rT(testValue='particleNumber', minValue=10, maxValue=100, pointNumber=12, n=8, style="logarithmic", tStep=40)
-#latticeList.no_display_run(timeStep=10, numberOfRuns=10)
+overallTime = Timer()
+propoTime = Timer()
+collisionTime = Timer()
 
-#latticeList.display_heatmap(timeStep=150, pauseBetweenSteps=.05)
+
+
+overallTime.startTimer()
+propoTime.startTimer()
+collisionTime.startTimer()
+
+
+latticeList = Lattice(containerSize=100, particleNumber=5000, distribution='random')
+#latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=10, style="logarithmic", tStep=40)
+
+
+latticeList.no_display_run(timeStep=50, numberOfRuns=1)
+
+
+
+#latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
 
