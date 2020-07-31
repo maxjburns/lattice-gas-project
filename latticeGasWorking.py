@@ -342,24 +342,16 @@ class Lattice:
         """this runs a simulation of the particle physics without displaying anything.
         Runs a number of times as indicated by numberOfRuns, and displays r values."""
         
-        overallTime.recordTime()
-        
         self.timeStep = timeStep
-        
         
         for i in range(0, numberOfRuns):
             countVar = self.timeStep
             
             while countVar > 0:
                 
-                propoTime.recordTime()
                 self.propagate()
-                propoTime.recordTime()
-                
-                collisionTime.recordTime()
                 self.collide()
-                collisionTime.recordTime()
-                
+
                 countVar -=1
                 
                 if(countVar == 0):
@@ -374,24 +366,12 @@ class Lattice:
                     print("Time Steps: " + str(self.timeStep))
                     print("containerSize: " + str(self.containerSize))
 
-                    print('propagate:')
-                    propoTime.requestTotalTime()
-
-
-                    print('collision:')
-                    collisionTime.requestTotalTime()
-
             self.reset_simulation()
 
         
         print("\nAverage rT value: " + str(sum(self.rValues)/len(self.rValues)))
         print("Average Pressure value: " + str(sum(self.pValues)/len(self.pValues)))
         print("Average Number of Bounces: " + str(sum(self.bValues)/len(self.bValues)))
-
-        overallTime.recordTime()
-
-        print('overall:')
-        overallTime.requestTotalTime()
 
     #================================================================================#
 
@@ -490,72 +470,11 @@ class Lattice:
 
     #================================================================================#
 
-class Timer:
-    """Used for debugging purposes, has a few utilities which measure the time it takes for a
-    block of code to run"""
-
-    def __init__(self):
-        self.startingTime = 0
-        self.timesRecorder = [0]
-        self.timesSinceLastCheck = []
-
-    def startTimer(self):
-        """Starts the initial timer, used to determine total time a program takes to run"""
-        self.startingTime = time.perf_counter()
-
-    def recordTime(self):
-        """Records the time state, and appends it to timesRecorder. Then appends the difference
-        in the recorded time, and the time before it, in timesSinceLastCheck."""
-
-        timeElapsed = time.perf_counter() - self.startingTime 
-
-        self.timesRecorder.append(timeElapsed)
-        self.timesSinceLastCheck.append(np.round(self.timesRecorder[-1] - self.timesRecorder[-2], decimals=3))
-
-    def requestTotalTime(self):
-        """Simple function which prints the last time recorded"""
-        print(sum(self.requestHalfList()))
-
-    def requestTimeList(self):
-        """displays the recorded list of time differences, only suitable when only one recordTime function
-        is triggered in a test run.""" 
-        for i in range(len(self.timesSinceLastCheck)//10):
-            for x in range(10):
-                print(self.timesSinceLastCheck[i*10 + x], end=', ')
-
-            print('\n')
-
-    def requestHalfList(self):
-        """displays the recorded list of time differences when running one recordTime at the beginning of a
-        function, and another at the end. Skips every other value in order to only see the space between the
-        two calls of RecordTime."""
-        outputList = []
-        for i in range(len(self.timesSinceLastCheck)//10):
-            for x in range(1, 10, 2):
-
-                print(self.timesSinceLastCheck[i*10 + x], end=', ')
-                outputList.append(self.timesSinceLastCheck[i*10 + x])
-            print('\n')   
-        return outputList  
-                
-
-
-overallTime = Timer()
-propoTime = Timer()
-collisionTime = Timer()
-
-
-
-overallTime.startTimer()
-propoTime.startTimer()
-collisionTime.startTimer()
-
-
 latticeList = Lattice(containerSize=100, particleNumber=5000, distribution='random')
-#latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=10, style="logarithmic", tStep=40)
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=10, style="logarithmic", tStep=40)
 
 
-latticeList.no_display_run(timeStep=50, numberOfRuns=1)
+#latticeList.no_display_run(timeStep=50, numberOfRuns=1)
 
 
 
