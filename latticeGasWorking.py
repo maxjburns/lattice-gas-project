@@ -137,7 +137,7 @@ class Lattice:
                 positionChosen = random.choice(openSpots)
                 self.lattice[randomRow][randomColumn][positionChosen] = 1
                 
-                self.coordList.append([randomRow, randomColumn, [positionChosen]])
+                self.coordList.append([randomRow, randomColumn, positionChosen])
                 
                 particlesRemaining -= 1
 
@@ -211,29 +211,21 @@ class Lattice:
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
         
-        for coord in self.coordList:
+        for coord in self.coordList: 
             
-            
-            y, x, zVals = coord
-            zStorage = []
-            for z in zVals:  
-                
-                if y % 2 == 0:
-                    xChange, yChange, zChange = vectorsOnEvenRow[z]
-                else:
-                    xChange, yChange, zChange = vectorsOnOddRow[z]
+            y, x, z = coord
+             
+            if y % 2 == 0:
+                xChange, yChange, zChange = vectorsOnEvenRow[z]
+            else:
+                xChange, yChange, zChange = vectorsOnOddRow[z]
     
-                newBoard[y + yChange][x + xChange][z + zChange] = 1
-                zStorage.append(z + zChange)
-                
-            
-            newCoordList.append([y + yChange, x + xChange, zStorage])
+            newBoard[y + yChange][x + xChange][z + zChange] = 1
+            newCoordList.append([y + yChange, x + xChange, z + zChange])
             
         self.coordList = newCoordList
         
         self.lattice = newBoard
-        
-        
         
     #================================================================================#
 
@@ -254,73 +246,69 @@ class Lattice:
 
         
         for coord in self.coordList:
-            y, x, zVals = coord  
-            zStorage = []
+            y, x, z = coord  
+            
 
-            for z in zVals:
-                if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
+            if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
                                 
-                    zChange = standardVectors[z]
-                    if self.lattice[y][x][z + zChange] == 1:                               
+                zChange = standardVectors[z]
+                if self.lattice[y][x][z + zChange] == 1:                               
                                    
-                        scatterPattern = random.choice(scatterList[z])
+                    scatterPattern = random.choice(scatterList[z])
 
-                        newBoard[y][x][z + scatterPattern] = 1
-                        newBoard[y][x][z + zChange + scatterPattern] = 1
-                        self.lattice[y][x][z] = 0
-                        self.lattice[y][x][z + zChange] = 0
+                    newBoard[y][x][z + scatterPattern] = 1
+                    newBoard[y][x][z + zChange + scatterPattern] = 1
+                    self.lattice[y][x][z] = 0
+                    self.lattice[y][x][z + zChange] = 0
                        
 
-                    elif z < 3 and self.lattice[y][x][z + 2] == 1 and self.lattice[y][x][z + 6*(z % 2) - 2] == 1:
+                elif z < 3 and self.lattice[y][x][z + 2] == 1 and self.lattice[y][x][z + 6*(z % 2) - 2] == 1:
                                     
-                        self.lattice[y][x][z] = 0
-                        self.lattice[y][x][z + 2] = 0
-                        self.lattice[y][x][z + 6*(z % 2) - 2] = 0
-                        newBoard[y][x][z] = 1
-                        newBoard[y][x][z + 2] = 1
-                        newBoard[y][x][z + 6*(z % 2) - 2] = 1
+                    self.lattice[y][x][z] = 0
+                    self.lattice[y][x][z + 2] = 0
+                    self.lattice[y][x][z + 6*(z % 2) - 2] = 0
+                    newBoard[y][x][z] = 1
+                    newBoard[y][x][z + 2] = 1
+                    newBoard[y][x][z + 6*(z % 2) - 2] = 1
                         
 
-                    else:
-                        newBoard[y][x][z + zChange] = 1
+                else:
+                    newBoard[y][x][z + zChange] = 1
                         
                             
-                else:
+            else:
                                 
-                    if x == self.containerSize - 1: # bottom
-                        zChange = bottomBounceVectors[z]
-                        self.bounces += np.sqrt(3) / 2
+                if x == self.containerSize - 1: # bottom
+                    zChange = bottomBounceVectors[z]
+                    self.bounces += np.sqrt(3) / 2
                                     
 
-                    elif y == self.containerSize - 1: # right side
-                        zChange = rightBounceVectors[z]
-                        if z == 0:
-                            self.bounces += 1.0
-                        else:
-                            self.bounces += 0.5
+                elif y == self.containerSize - 1: # right side
+                    zChange = rightBounceVectors[z]
+                    if z == 0:
+                        self.bounces += 1.0
+                    else:
+                        self.bounces += 0.5
                                 
-                    elif x == 0: # top
-                        zChange = topBounceVectors[z]
-                        self.bounces += np.sqrt(3) / 2
+                elif x == 0: # top
+                    zChange = topBounceVectors[z]
+                    self.bounces += np.sqrt(3) / 2
                                 
-                    elif y == 0: # left side
-                        zChange = leftBounceVectors[z]
-                        if z == 3:
-                            self.bounces += 1.0
-                        else:
-                            self.bounces += 0.5
+                elif y == 0: # left side
+                    zChange = leftBounceVectors[z]
+                    if z == 3:
+                        self.bounces += 1.0
+                    else:
+                        self.bounces += 0.5
 
                                 
-                    newBoard[y][x][z + zChange] = 1
+                newBoard[y][x][z + zChange] = 1
 
-                zStorage.append(z + zChange)        
-            newCoordList.append([y, x, zStorage])
+                        
+            newCoordList.append([y, x, z + zChange])
         self.coordList = newCoordList
         self.lattice = newBoard
         
-        
-        
-
     #================================================================================#    
     
     def simulation_stats(self):
@@ -470,8 +458,8 @@ class Lattice:
 
     #================================================================================#
 
-latticeList = Lattice(containerSize=100, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=10, style="logarithmic", tStep=40)
+latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=6, n=5, style="logarithmic", tStep=40)
 
 
 #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
