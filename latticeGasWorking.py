@@ -214,7 +214,7 @@ class Lattice:
         for coord in self.coordList: 
             
             y, x, z = coord
-             
+            
             if y % 2 == 0:
                 xChange, yChange, zChange = vectorsOnEvenRow[z]
             else:
@@ -407,15 +407,14 @@ class Lattice:
         for i in range(len(xList)):
             xList[i] += xList[i] % 2
         
-        minRTValues = []
-        maxRTValues = []
+        stdRTValues = []
+        
         avgRTValues = []
         if testValue == 'tstep':
             for x in xList:
                 latticeList.no_display_run(timeStep=x, numberOfRuns=n)
                 
-                maxRTValues.append(np.amax(self.rValues))
-                minRTValues.append(np.amin(self.rValues))
+                stdRTValues.append(np.std(self.rValues))
                 avgRTValues.append(np.average(self.rValues))
                 self.rValues = []
                 self.pValues = []
@@ -435,18 +434,18 @@ class Lattice:
 
                 latticeList.no_display_run(timeStep=tStep, numberOfRuns=n)
                 
-                maxRTValues.append(np.amax(self.rValues))
-                minRTValues.append(np.amin(self.rValues))
+                stdRTValues.append(np.std(self.rValues))
                 avgRTValues.append(np.average(self.rValues))
                 self.rValues = []
                 self.pValues = []
                 self.bValues = []
 
-        yerr = [minRTValues, maxRTValues]
+        
         
         yList = avgRTValues
+        print(stdRTValues)
         
-        plt.errorbar(xList, yList, yerr=yerr, fmt='o', ecolor='red')
+        plt.errorbar(xList, yList, yerr=stdRTValues, fmt='o', ecolor='red')
         ax.legend([testValue + "vs rT"])
         ax.set_ylabel("rT")
         ax.set_xlabel(testValue)
@@ -459,12 +458,8 @@ class Lattice:
     #================================================================================#
 
 latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=6, n=5, style="logarithmic", tStep=40)
-
-
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=5, n=15, style="linear", tStep=40)
 #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
-
-
 
 #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
 
