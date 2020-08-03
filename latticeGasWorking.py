@@ -462,9 +462,9 @@ class Lattice:
 
         #-----setting up graph:-----#
         yList = avgRTValues
-
+        curveList = np.linspace(minValue-20, maxValue, 1000)
         plt.errorbar(xList, yList, yerr=stdRTValues, fmt='o', ecolor='red')
-        plt.plot(betaFit / np.power(xList, 2))
+        plt.plot(curveList, betaFit / np.power(curveList, 2))
         print(betaFit / np.power(xList, 2))
         ax.legend([testValue + "vs rT"])
         ax.set_ylabel("rT")
@@ -478,7 +478,7 @@ class Lattice:
     #================================================================================#
 
 latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=6, style="linear", tStep=40)
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=6, n=6, style="linear", tStep=40)
 #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
 
 #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
