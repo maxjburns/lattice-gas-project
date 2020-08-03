@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
+from scipy.optimize import leastsq
 import time
 
 
@@ -41,6 +42,7 @@ class Lattice:
         self.rValues = []
         self.pValues = []
         self.bValues = []
+        self.multiRun = False
         
 
 
@@ -363,12 +365,16 @@ class Lattice:
 
     #================================================================================#
 
-    def reset_simulation(self):
+    def reset_simulation(self, includeLists=False):
         """Wipes the board and resets bounces, then redistributes the correct number of particles."""
+        if includeLists:
+            self.rValues = []
+            self.pValues = []
+            self.bValues = []
+
         self.lattice = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         self.bounces = 0
         
-
         if self.distribution == 'tripleCollisionDemo':
             self.manual_particles([(3, 3, 5), (5, 3, 1), (4, 5, 3), (8, 6, 0), (7, 7, 4), (9, 7, 2)])
         
@@ -400,51 +406,69 @@ class Lattice:
         OUTPUT:
         -prints information about each iteration to the terminal, once finished, the intended graph is displayed."""
 
+        stdRTValues = []
+        avgRTValues = []
+        self.multiRun = True
+
         fig = plt.figure()
         ax = fig.add_subplot()
         xList = np.linspace(minValue, maxValue, pointNumber)
         xList = [round(x) for x in xList]
         for i in range(len(xList)):
             xList[i] += xList[i] % 2
-        
-        stdRTValues = []
-        
-        avgRTValues = []
+    
+
+        #-----running simulations:-----#
         if testValue == 'tstep':
             for x in xList:
+
+                self.reset_simulation(includeLists=True)
                 latticeList.no_display_run(timeStep=x, numberOfRuns=n)
                 
                 stdRTValues.append(np.std(self.rValues))
                 avgRTValues.append(np.average(self.rValues))
-                self.rValues = []
-                self.pValues = []
-                self.bValues = []
-        else:
-
-            for x in xList:
                 
+        else:
+            for x in xList: 
                 if testValue == 'containerSize':
                     self.containerSize = x
-                    self.reset_simulation()
-            
                 elif testValue == 'particleNumber':
                     self.particleNumber = x
-                    self.reset_simulation()
-
-
+                
+                self.reset_simulation(includeLists=True)
                 latticeList.no_display_run(timeStep=tStep, numberOfRuns=n)
                 
                 stdRTValues.append(np.std(self.rValues))
                 avgRTValues.append(np.average(self.rValues))
-                self.rValues = []
-                self.pValues = []
-                self.bValues = []
+        
+        
+        #-----least square:-----#
+        betaFitList = []
+        
+        def model(x, b):
+            return b/x**2
 
-        
-        
-        yList = avgRTValues
+        def residuals(b, rT, x, rTerr):
+            err = (rT - model(x, b))/rTerr
+            return err
+
+        print("\nStandard Deviation of RT averages:")
         print(stdRTValues)
-        
+        print("\n\nbetaFit Values:")
+
+        for i in range(len(xList)):
+            rT = avgRTValues[i]
+            x = xList[i]
+            rTerr = stdRTValues[i]
+
+            plsq = leastsq(residuals, x0=1.0, args=(rT, x, rTerr))
+            betaFitList.append(plsq[0])
+
+        print(betaFitList)
+
+        #-----setting up graph:-----#
+        yList = avgRTValues
+
         plt.errorbar(xList, yList, yerr=stdRTValues, fmt='o', ecolor='red')
         ax.legend([testValue + "vs rT"])
         ax.set_ylabel("rT")
@@ -458,7 +482,7 @@ class Lattice:
     #================================================================================#
 
 latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=5, n=15, style="linear", tStep=40)
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=8, n=4, style="linear", tStep=40)
 #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
 
 #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
