@@ -389,7 +389,7 @@ class Lattice:
 
     #================================================================================#
 
-    def plot_rT(self, testValue='tStep', minValue=100, maxValue=500, pointNumber=15, n=5, style="linear", tStep=30):
+    def plot_rT(self, testValue='tStep', minValue=100, maxValue=500, pointNumber=12, n=5, style="linear", tStep=30):
         """Graphs the rT values produced by the simulation.
         
         INPUT:
@@ -443,10 +443,9 @@ class Lattice:
         
         
         #-----least square:-----#
-        betaFitList = []
         
         def model(x, b):
-            return b/x**2
+            return b / np.power(x, 2)
 
         def residuals(b, rT, x, rTerr):
             err = (rT - model(x, b))/rTerr
@@ -454,22 +453,19 @@ class Lattice:
 
         print("\nStandard Deviation of RT averages:")
         print(stdRTValues)
-        print("\n\nbetaFit Values:")
 
-        for i in range(len(xList)):
-            rT = avgRTValues[i]
-            x = xList[i]
-            rTerr = stdRTValues[i]
+        plsq = leastsq(residuals, x0=1.0, args=(avgRTValues, xList, stdRTValues))
+        betaFit = plsq[0]
 
-            plsq = leastsq(residuals, x0=1.0, args=(rT, x, rTerr))
-            betaFitList.append(plsq[0])
-
-        print(betaFitList)
+        print("\n\nbetaFit Value:")
+        print(betaFit)
 
         #-----setting up graph:-----#
         yList = avgRTValues
 
         plt.errorbar(xList, yList, yerr=stdRTValues, fmt='o', ecolor='red')
+        plt.plot(betaFit / np.power(xList, 2))
+        print(betaFit / np.power(xList, 2))
         ax.legend([testValue + "vs rT"])
         ax.set_ylabel("rT")
         ax.set_xlabel(testValue)
@@ -482,7 +478,7 @@ class Lattice:
     #================================================================================#
 
 latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=8, n=4, style="linear", tStep=40)
+latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=12, n=6, style="linear", tStep=40)
 #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
 
 #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
