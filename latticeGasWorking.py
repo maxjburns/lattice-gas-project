@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
+import pytest
 from scipy.optimize import leastsq
 import time
 
