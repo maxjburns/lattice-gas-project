@@ -250,7 +250,6 @@ class Lattice:
         for coord in self.coordList:
             y, x, z = coord  
             
-
             if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
                                 
                 zChange = standardVectors[z]
@@ -477,9 +476,11 @@ class Lattice:
 
     #================================================================================#
 
-latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
-latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=6, n=6, style="linear", tStep=40)
-#latticeList.no_display_run(timeStep=50, numberOfRuns=1)
+if __name__ == '__main__':
 
-#latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
+    latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
+    latticeList.plot_rT(testValue='containerSize', minValue=100, maxValue=500, pointNumber=6, n=6, style="linear", tStep=40)
+    #latticeList.no_display_run(timeStep=50, numberOfRuns=1)
+
+    #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
 
