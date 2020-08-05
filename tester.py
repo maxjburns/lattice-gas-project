@@ -210,23 +210,27 @@ class Lattice:
         node to another node, based on their index position. at the beginning of
         propagate, particles are moving away from the central node, at the end,
         they are moved and considered to be moving away."""
-        self.newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
-        
+        newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
+        newCoordList = []
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
         vectorsOnOddRow = [(1, 0, 3), (1, -1, 3), (0, -1, 3), (-1, 0, -3), (0, 1, -3), (1, 1, -3)]
         
-        for (i, coord) in enumerate(self.coordList): 
+        for coord in self.coordList: 
             y, x, z = coord
             
             if y % 2 == 0:
                 xChange, yChange, zChange = vectorsOnEvenRow[z]
             else:
                 xChange, yChange, zChange = vectorsOnOddRow[z]
-
-            self.point_change(i, [y + yChange, x + xChange, z + zChange])
+            if y+yChange<0:
+                print(y)
+                print(yChange)
+            newBoard[y + yChange][x + xChange][z + zChange] = 1
+            newCoordList.append([y + yChange, x + xChange, z + zChange])
+            
+        self.coordList = newCoordList
         
-        self.lattice = self.newBoard.copy()
-        self.newBoard = []
+        self.lattice = newBoard
         
     #================================================================================#
 
@@ -236,7 +240,8 @@ class Lattice:
         direction that they are approaching the center of the node from. During collide, the
         particles move from their original index, to another index, across the node if there
         is no collision."""
-        self.newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
+        newCoordList = []
+        newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         standardVectors = [3, 3, 3, -3, -3, -3]
         topBounceVectors = [0, 4, 3, -3, -3, -4]
         bottomBounceVectors = [3, 3, 2, 0, -2, -3]
@@ -247,8 +252,7 @@ class Lattice:
         scatteredVals = []
         self.scatterCounter = 0
 
-        for (i, coord) in enumerate(self.coordList):
-            
+        for coord in self.coordList:
             y, x, z = coord  
             
             if x != self.containerSize - 1 and y != self.containerSize - 1 and x != 0 and y != 0:
@@ -259,19 +263,25 @@ class Lattice:
                 if self.lattice[y][x][z + zChange] == 1 and np.sum(self.lattice[y][x])==2:                               
                     
                     if not [y, x, z] in scatteredVals:
+                        
                         scatteredVals.append([y, x, z + zChange])
                         scatteredVals.append([y, x, z])
                         scatterPattern = scatterList[z][self.scatterCounter]
                         self.scatterCounter = -1 * self.scatterCounter + 1
 
-                        self.point_change(i, [y, x, z + scatterPattern])
-                        self.point_change(i, [y, x, z + zChange + scatterPattern])
+                        newBoard[y][x][z + scatterPattern] = 1
+                        newBoard[y][x][z + zChange + scatterPattern] = 1
+
+                        newCoordList.append([y, x, z + scatterPattern])
+                        newCoordList.append([y, x, z + zChange + scatterPattern])
 
                 elif self.lattice[y][x][tripOne] == 1 and self.lattice[y][x][tripTwo] == 1:
-                    self.point_change(i, coord)
+                    newBoard[y][x][z] = 1
+                    newCoordList.append([y, x, z])
 
                 else:
-                    self.point_change(i, [y, x, z + zChange])
+                    newBoard[y][x][z + zChange] = 1
+                    newCoordList.append([y, x, z + zChange])
                         
             else:
                 cornerCheck = 0               
@@ -307,12 +317,11 @@ class Lattice:
                     self.bounces = tempBounces + 1.0
                     zChange = 0
 
-                self.point_change(i, [y, x, z + zChange])
+                newBoard[y][x][z + zChange] = 1
+                newCoordList.append([y, x, z + zChange])
 
-        
-        self.lattice = self.newBoard.copy()
-       
-        self.newBoard = []
+        self.coordList = newCoordList
+        self.lattice = newBoard
 
     #================================================================================#    
     
@@ -407,7 +416,6 @@ class Lattice:
         -style expects a string, either "linear" or "logarithmic", and refers to the y axis scaling
         -tStep is only used when timeStep is not the value being tested, it determines the number of time steps each
         iteration, when testing containerSize or particleNumber.
-
         OUTPUT:
         -prints information about each iteration to the terminal, once finished, the intended graph is displayed."""
 
@@ -482,42 +490,22 @@ class Lattice:
 
     #================================================================================#
 
-    def point_change(self, index, newCoord):
-        """Takes the index value of coordList and the target coordinate. Replaces the value of
-        coord and adds a particle to the new board."""
-        newy, newx, newz = newCoord
-
-        self.coordList[index] = newCoord
-        self.newBoard[newy][newx][newz] = 1
-
-    #================================================================================#
-
-
-
 class TesterClass:
-    
     def test_bounceCount(self):
         latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
         latticeList.no_display_run(timeStep=30, numberOfRuns=1)
         assert latticeList.finalBounces > 800 and latticeList.finalBounces < 1100
-
-    #================================================================================#
 
     def test_particlePlacer(self):
         latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
         latticeList.particle_counter()
         assert latticeList.particleNumber == 5000 and np.sum(latticeList.particleCountList) == 5000   
 
-    #================================================================================#
-
     def test_particlesDisappear(self):
         latticeList = Lattice(containerSize=15, particleNumber=10, distribution='random')
         latticeList.no_display_run(timeStep=300, numberOfRuns=1)
         latticeList.particle_counter()
         assert np.sum(latticeList.particleCountList) == 10
-
-    #================================================================================#
-
 
 if __name__ == '__main__':
 
@@ -527,4 +515,3 @@ if __name__ == '__main__':
     latticeList.no_display_run(timeStep=300, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
-
