@@ -181,7 +181,7 @@ class Lattice:
         ax.set_title("Particle Distribution")
         fig.tight_layout()
         self.particle_counter()
-        im = ax.imshow(self.particleCountList, cmap='Blues')
+        im = ax.imshow(self.particleCountList, cmap='plasma')
         
 
         while countVar > 0:
@@ -531,8 +531,8 @@ if __name__ == '__main__':
 
     latticeList = Lattice(containerSize=200, particleNumber=800, distribution='random')
 
-    latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
+    #latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
-    #latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
+    latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
 
