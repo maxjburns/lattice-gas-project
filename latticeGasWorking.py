@@ -517,6 +517,7 @@ class Lattice:
         arrayResolution = int(self.containerSize / resStep)
         resStep = int(resStep)
         
+        
         for y in range(arrayResolution):
             for x in range(arrayResolution):
                 yStart = y * resStep
@@ -524,7 +525,7 @@ class Lattice:
                 xStart = x * resStep
                 xEnd = (x + 1) * resStep
                 
-                self.heatmapList[y][x] = np.sum(self.particle_counter(yStart=yStart, yEnd=yEnd, xStart=xStart, xEnd=xEnd))
+                self.heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
 
     #================================================================================#
 
@@ -602,5 +603,5 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20)
+    latticeList.display_advanced_data(timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=50)
 
