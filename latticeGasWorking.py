@@ -33,7 +33,7 @@ class Lattice:
         that could produce a two-direction collision."""
     #================================================================================#
     
-    def __init__(self, containerSize=100, particleNumber=5000, distribution='random'):
+    def __init__(self, containerSize=100, particleNumber=5000, distribution='random', yBounds=(0,0), xBounds=(0,0)):
         
         self.lattice = np.zeros((containerSize, containerSize, 6), np.int8)
         self.containerSize = containerSize
@@ -55,6 +55,9 @@ class Lattice:
         
         elif distribution == 'random':
             self.random_particles()
+
+        elif distribution == 'controlledRandom':
+            self.controlled_random_particles(yBounds, xBounds)
         
         else:
             self.random_particles()
@@ -156,6 +159,47 @@ class Lattice:
 
     #================================================================================#
 
+    def controlled_random_particles(self, yBounds, xBounds):
+        """places particles randomly, if a particle is in a position at first, it is
+        assumed to be moving away from the center of the parent node."""
+        
+        xMin, xMax = xBounds
+        yMin, yMax = yBounds
+        
+        assert yMin != yMax and xMin != xMax 
+        assert yMin > 1 and xMin > 1  
+        assert yMax < self.containerSize-1 and xMax < self.containerSize-1
+        assert self.particleNumber <= (yMax - yMin) * (xMax - xMin) * 6
+
+        self.counter = 0
+        self.coordList = []
+        particlesRemaining = self.particleNumber
+        
+        # the following while loop attempts to place a particle each iteration, if the spot
+        # picked is full, it finds a new random spot on the next iteration. It consumes
+        # particles as it goes, until it runs out. If a spot is full, nothing is consumed.
+
+        while particlesRemaining != 0:
+            
+            # these randomly select a row and column
+            randomColumn = random.randint(xMin, xMax)
+            randomRow = random.randint(yMin, yMax)
+            openSpots = self.spots_remaining(randomColumn, randomRow)
+
+            
+            # this if statement ensures that the only time a particle is added is when there
+            # are spots remaining.
+            if len(openSpots) > 0:
+                positionChosen = random.choice(openSpots)
+                self.lattice[randomRow][randomColumn][positionChosen] = 1
+                
+                self.coordList.append([randomRow, randomColumn, positionChosen])
+                self.counter += 1
+                
+                particlesRemaining -= 1
+    
+    #================================================================================#
+
     def particle_counter(self, yStart=0, yEnd=-1, xStart=0, xEnd=-1):
         """creates a array of how many particles are around the nodes in each spot."""
         
@@ -194,7 +238,7 @@ class Lattice:
         ax.set_title("Particle Distribution")
         fig.tight_layout()
         particleCountList = self.particle_counter()
-        im = ax.imshow(particleCountList, cmap='plasma')
+        im = ax.imshow(particleCountList, cmap='Blues', interpolation='bilinear')
         fig.colorbar(im, ax=ax)
 
         while countVar > 0:
@@ -531,7 +575,7 @@ class Lattice:
 
     def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
         self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
-        self.heatmapList[4][5] = 4 * self.particleNumber / arrayResolution**2 # why in the world does this work?
+        #self.heatmapList[4][5] = 4 * self.particleNumber / arrayResolution**2 # why in the world does this work?
 
         if display == 'particleBoxes':
             resolutionStep = self.containerSize / arrayResolution
@@ -547,25 +591,24 @@ class Lattice:
             ax.set_title("Particle Distribution")
             fig.tight_layout()
             
-            
-            im = ax.imshow(self.heatmapList, cmap='plasma')
+            self.find_particle_boxes(resStep=resolutionStep)
+            im = ax.imshow(self.heatmapList, cmap='Blues', interpolation='bilinear')
+            im.set_clim(vmin=0, vmax=np.max(self.heatmapList)/2)
             fig.colorbar(im, ax=ax)
-            
-            while countVar > 0:
 
+            while countVar > 0:
+                if countVar % 50 == 0:
+                    im.set_clim(vmin=0, vmax=np.max(self.heatmapList))
                 self.find_particle_boxes(resStep=resolutionStep)
                 
                 im.set_data(self.heatmapList)
-                
+
                 self.propagate()
                 
                 self.collide()
                 
                 plt.pause(pauseBetweenSteps)
                 countVar -=1
-                if(countVar == 1):
-                    
-                    print('wall bounces: ' + str(self.bounces))
             
             plt.show()
 
@@ -597,11 +640,11 @@ class TesterClass:
 
 if __name__ == '__main__':
 
-    latticeList = Lattice(containerSize=500, particleNumber=8000, distribution='random')
+    latticeList = Lattice(containerSize=200, particleNumber=200, distribution='controlledRandom', yBounds=(2,10), xBounds=(40,60))
 
     #latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=50)
+    latticeList.display_advanced_data(timeStep=500, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=50)
 
