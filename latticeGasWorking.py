@@ -156,16 +156,29 @@ class Lattice:
 
     #================================================================================#
 
-    def particle_counter(self):
+    def particle_counter(self, yStart=0, yEnd=-1, xStart=0, xEnd=-1):
         """creates a array of how many particles are around the nodes in each spot."""
-        particleCountList = np.zeros((self.containerSize, self.containerSize), np.int8)
+        
+        if yEnd == -1:
+            yEnd = self.containerSize
+            xEnd = self.containerSize
+        
+        particleCountList = np.zeros((yEnd - yStart, xEnd - xStart), np.int8)
+        xIndex = 0
+        yIndex = 0
+        yEnd-=1
+        xEnd-=1
 
-        for i in range(0, self.containerSize):
-            for x in range(0, self.containerSize):
-                particleCountList[i][x] = np.count_nonzero(self.lattice[i][x] == 1)
+        for y in range(yStart, yEnd):
+            xIndex = 0
+            for x in range(xStart, xEnd):
+                
+                particleCountList[yIndex][xIndex] = np.count_nonzero(self.lattice[y][x] == 1)
 
+                xIndex+=1
+            yIndex+=1
 
-        self.particleCountList = particleCountList
+        return particleCountList
   
     #================================================================================#
 
@@ -180,15 +193,15 @@ class Lattice:
         countVar = self.timeStep
         ax.set_title("Particle Distribution")
         fig.tight_layout()
-        self.particle_counter()
-        im = ax.imshow(self.particleCountList, cmap='plasma')
-        
+        particleCountList = self.particle_counter()
+        im = ax.imshow(particleCountList, cmap='plasma')
+        fig.colorbar(im, ax=ax)
 
         while countVar > 0:
             
-            self.particle_counter()
+            particleCountList = self.particle_counter()
             
-            im.set_data(self.particleCountList)
+            im.set_data(particleCountList)
             
             self.propagate()
             
@@ -500,6 +513,60 @@ class Lattice:
 
     #================================================================================#
 
+    def find_particle_boxes(self, resStep):
+        arrayResolution = int(self.containerSize / resStep)
+        resStep = int(resStep)
+        
+        for y in range(arrayResolution):
+            for x in range(arrayResolution):
+                yStart = y * resStep
+                yEnd = (y + 1) * resStep
+                xStart = x * resStep
+                xEnd = (x + 1) * resStep
+                
+                self.heatmapList[y][x] = np.sum(self.particle_counter(yStart=yStart, yEnd=yEnd, xStart=xStart, xEnd=xEnd))
+
+    #================================================================================#
+
+    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
+        self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
+        self.heatmapList[4][5] = 4 * self.particleNumber / arrayResolution**2 # why in the world does this work?
+
+        if display == 'particleBoxes':
+            resolutionStep = self.containerSize / arrayResolution
+
+            if resolutionStep - int(resolutionStep) != 0:
+                raise AssertionError()
+
+            fig, ax = plt.subplots()
+        
+            self.timeStep = timeStep
+            
+            countVar = self.timeStep
+            ax.set_title("Particle Distribution")
+            fig.tight_layout()
+            
+            
+            im = ax.imshow(self.heatmapList, cmap='plasma')
+            fig.colorbar(im, ax=ax)
+            
+            while countVar > 0:
+
+                self.find_particle_boxes(resStep=resolutionStep)
+                
+                im.set_data(self.heatmapList)
+                
+                self.propagate()
+                
+                self.collide()
+                
+                plt.pause(pauseBetweenSteps)
+                countVar -=1
+                if(countVar == 1):
+                    
+                    print('wall bounces: ' + str(self.bounces))
+            
+            plt.show()
 
 
 class TesterClass:
@@ -514,7 +581,7 @@ class TesterClass:
     def test_particlePlacer(self):
         latticeList = Lattice(containerSize=150, particleNumber=5000, distribution='random')
         latticeList.particle_counter()
-        assert latticeList.particleNumber == 5000 and np.sum(latticeList.particleCountList) == 5000   
+        assert latticeList.particleNumber == 5000 and np.sum(latticeList.particle_counter()) == 5000   
 
     #================================================================================#
 
@@ -522,17 +589,18 @@ class TesterClass:
         latticeList = Lattice(containerSize=15, particleNumber=10, distribution='random')
         latticeList.no_display_run(timeStep=300, numberOfRuns=1)
         latticeList.particle_counter()
-        assert np.sum(latticeList.particleCountList) == 10
+        assert np.sum(latticeList.particle_counter()) == 10
 
     #================================================================================#
 
 
 if __name__ == '__main__':
 
-    latticeList = Lattice(containerSize=200, particleNumber=800, distribution='random')
+    latticeList = Lattice(containerSize=500, particleNumber=8000, distribution='random')
 
     #latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
-    latticeList.display_heatmap(timeStep=50, pauseBetweenSteps=.05)
+    #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
+    latticeList.display_advanced_data(timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20)
 
