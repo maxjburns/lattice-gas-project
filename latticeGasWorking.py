@@ -596,22 +596,20 @@ class Lattice:
     def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
         
         resolutionStep = self.containerSize / arrayResolution
-        
+        if resolutionStep - int(resolutionStep) != 0:
+            raise AssertionError()
+
+        self.timeStep = timeStep
+        countVar = self.timeStep
+        fig, ax = plt.subplots()
+        fig.tight_layout()
+
         if display == 'particleBoxes':
-            self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
-
-            if resolutionStep - int(resolutionStep) != 0:
-                raise AssertionError()
-
-            fig, ax = plt.subplots()
-        
-            self.timeStep = timeStep
-            
-            countVar = self.timeStep
             ax.set_title("Particle Distribution")
-            fig.tight_layout()
             
+            self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
             self.find_particle_boxes(resStep=resolutionStep)
+
             im = ax.imshow(self.heatmapList, cmap='Blues', interpolation='bilinear')
             im.set_clim(vmin=0, vmax=np.max(self.heatmapList)/2)
             fig.colorbar(im, ax=ax)
@@ -619,12 +617,11 @@ class Lattice:
             while countVar > 0:
                 if countVar % 50 == 0:
                     im.set_clim(vmin=0, vmax=np.max(self.heatmapList))
-                self.find_particle_boxes(resStep=resolutionStep)
                 
+                self.find_particle_boxes(resStep=resolutionStep)
                 im.set_data(self.heatmapList)
 
                 self.propagate()
-                
                 self.collide()
                 
                 plt.pause(pauseBetweenSteps)
@@ -633,27 +630,15 @@ class Lattice:
             plt.show()
 
         elif display=='momentumVectors':
-
-            if resolutionStep - int(resolutionStep) != 0:
-                raise AssertionError()
-
-            self.timeStep = timeStep
-            countVar = self.timeStep
-
-            fig, ax = plt.subplots()
             ax.set_title("Momentum Vectors")
-            fig.tight_layout()
 
             while countVar > 0:
-                
                 U, V = self.find_momentum_vectors(resStep=resolutionStep)
                 if countVar % resolutionStep == 0:
                     plt.clf()
-                    
                     plt.quiver(U, V, scale=np.max([U, V])*5, scale_units='inches')
 
                 self.propagate()
-                
                 self.collide()
                 
                 plt.pause(pauseBetweenSteps)
@@ -698,5 +683,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, display='momentumVectors', arrayResolution=40)
-
+    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, display='particleBoxes', arrayResolution=40)
+    #
+    # display can be either particleBoxes or momentumVectors
+    #
