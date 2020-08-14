@@ -2,20 +2,17 @@
 # -*- coding: utf-8 -*-
 # spot for modifiable variables:
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import random
 import pytest
 from scipy.optimize import leastsq
-import time
-
-
 
 # ----------------------------------------------------------------------------#
 
 class Lattice:
-    """Class used to create and display the lattice.
+    """
+    Class used to create and display the lattice.
     
     For Initialization:
     containerSize refers to the length of one side of the square container.
@@ -33,7 +30,8 @@ class Lattice:
         that could produce a three-direction collision
         
         'doubleCollisionDemo', which places six particles in the three possible orientations
-        that could produce a two-direction collision."""
+        that could produce a two-direction collision.
+        """
     #================================================================================#
     
     def __init__(self, containerSize=100, particleNumber=5000, distribution='random', yBounds=(0,0), xBounds=(0,0)):
@@ -531,7 +529,6 @@ class Lattice:
         plsq = leastsq(residuals, x0=[1.0, -2.0], args=(avgRTValues, xList, stdRTValues))
         betaFit = plsq[0][0]
         rFit = plsq[0][1]
-        print(plsq)
         
         print("\n\nbetaFit Value:")
         print(betaFit)
@@ -542,10 +539,7 @@ class Lattice:
         yList = avgRTValues
         curveList = np.linspace(minValue, maxValue, 1000)
         plt.errorbar(xList, yList, yerr=stdRTValues, fmt='o', ecolor='red')
-        print(np.shape(curveList))
-        print(np.shape(betaFit * np.power(curveList, rFit)))
         plt.plot(curveList, betaFit * np.power(curveList, rFit))
-        print(betaFit / np.power(xList, rFit))
 
         ax.legend([testValue + "vs rT"])
         ax.set_ylabel("rT")
@@ -626,9 +620,12 @@ class Lattice:
 
             while countVar > 0:
                 U, V = self.find_momentum_vectors(resStep=resolutionStep)
+                X = np.arange(0, arrayResolution)
+                Y = np.arange(0, arrayResolution)
+
                 if countVar % resolutionStep == 0:
                     plt.clf()
-                    plt.quiver(U, V, scale=np.max([U, V])*5, scale_units='inches')
+                    plt.quiver(X, Y, U, V, scale=8, scale_units='inches')
 
                 self.propagate()
                 self.collide()
@@ -682,6 +679,7 @@ class Lattice:
         resStep = int(resStep)
         yVectorArray = np.zeros((arrayResolution, arrayResolution))
         xVectorArray = np.zeros((arrayResolution, arrayResolution))
+        countArray = np.zeros((arrayResolution, arrayResolution))
 
         xyVectors = ((0.0, 1.0), (np.sqrt(3)/-2, 0.5), (np.sqrt(3)/-2, -0.5), (0.0, -1.0), (np.sqrt(3)/2, -0.5), (np.sqrt(3)/2, 0.5))
 
@@ -691,7 +689,12 @@ class Lattice:
 
             yVectorArray[int(y // resStep)][int(x // resStep)] += yVector
             xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
+
+            countArray[int(y // resStep)][int(x // resStep)] += 1
         
+        yVectorArray = np.true_divide(yVectorArray, countArray)
+        xVectorArray = np.true_divide(xVectorArray, countArray)
+
         return yVectorArray, xVectorArray
 
     #================================================================================#
@@ -721,12 +724,11 @@ class TesterClass:
 
     #================================================================================#
 
-
 if __name__ == '__main__':
 
-    latticeList = Lattice(containerSize=200, particleNumber=2000, distribution='controlledRandom', yBounds=(2,50), xBounds=(2,50))
+    latticeList = Lattice(containerSize=400, particleNumber=2000, distribution='controlledRandom', yBounds=(2,50), xBounds=(2,50))
 
-    #latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
+    #latticeList.plot_rT(testValue='particleNumber', minValue=50, maxValue=10000, pointNumber=8, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
