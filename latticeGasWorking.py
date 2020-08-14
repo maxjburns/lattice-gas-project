@@ -573,12 +573,32 @@ class Lattice:
 
     #================================================================================#
 
-    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
-        self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
-        #self.heatmapList[4][5] = 4 * self.particleNumber / arrayResolution**2 # why in the world does this work?
+    def find_momentum_vectors(self, resStep):
+        arrayResolution = int(self.containerSize / resStep)
+        resStep = int(resStep)
+        yVectorArray = np.zeros((arrayResolution, arrayResolution))
+        xVectorArray = np.zeros((arrayResolution, arrayResolution))
 
+        xyVectors = ((0.0, 1.0), (np.sqrt(3)/-2, 0.5), (np.sqrt(3)/-2, -0.5), (0.0, -1.0), (np.sqrt(3)/2, -0.5), (np.sqrt(3)/2, 0.5))
+
+        for coord in self.coordList:
+            y, x, z = coord
+            xVector, yVector = xyVectors[z]
+
+            yVectorArray[int(y // resStep)][int(x // resStep)] += yVector
+
+            xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
+        
+        return yVectorArray, xVectorArray
+
+    #================================================================================#
+
+    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
+        
+        resolutionStep = self.containerSize / arrayResolution
+        
         if display == 'particleBoxes':
-            resolutionStep = self.containerSize / arrayResolution
+            self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
 
             if resolutionStep - int(resolutionStep) != 0:
                 raise AssertionError()
@@ -612,6 +632,38 @@ class Lattice:
             
             plt.show()
 
+        elif display=='momentumVectors':
+
+            if resolutionStep - int(resolutionStep) != 0:
+                raise AssertionError()
+
+            self.timeStep = timeStep
+            countVar = self.timeStep
+
+            fig, ax = plt.subplots()
+            ax.set_title("Momentum Vectors")
+            fig.tight_layout()
+
+            while countVar > 0:
+                
+                U, V = self.find_momentum_vectors(resStep=resolutionStep)
+                if countVar % resolutionStep == 0:
+                    plt.clf()
+                    
+                    plt.quiver(U, V, scale=np.max([U, V])*5, scale_units='inches')
+
+                self.propagate()
+                
+                self.collide()
+                
+                plt.pause(pauseBetweenSteps)
+                countVar -=1
+            
+            plt.show()            
+
+    #================================================================================#
+
+
 
 class TesterClass:
     
@@ -640,11 +692,11 @@ class TesterClass:
 
 if __name__ == '__main__':
 
-    latticeList = Lattice(containerSize=200, particleNumber=200, distribution='controlledRandom', yBounds=(2,10), xBounds=(40,60))
+    latticeList = Lattice(containerSize=200, particleNumber=2000, distribution='controlledRandom', yBounds=(2,50), xBounds=(2,50))
 
     #latticeList.plot_rT(testValue='particleNumber', minValue=100, maxValue=6000, pointNumber=6, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=500, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=50)
+    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, display='momentumVectors', arrayResolution=40)
 
