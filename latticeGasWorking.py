@@ -22,9 +22,12 @@ class Lattice:
     particleNumber refers to the number of particles added during random distribution
     distribution refers to the type of particle distribution.
         
-    Currently there are three parameters for distribution:
+    Currently there are four parameters for distribution:
         
         'random', which creates a random assortment of particles based on particleNumber
+
+        'controlledRandom', which creates a random assortment of particles in defined
+        x and y bounds.
         
         'tripleCollisionDemo', which places six particles in the two possible orientations
         that could produce a three-direction collision
@@ -160,8 +163,11 @@ class Lattice:
     #================================================================================#
 
     def controlled_random_particles(self, yBounds, xBounds):
-        """places particles randomly, if a particle is in a position at first, it is
-        assumed to be moving away from the center of the parent node."""
+        """
+        places particles randomly, if a particle is in a position at first, it is
+        assumed to be moving away from the center of the parent node. Takes yBounds
+        and xBounds as arguments, both are tuples.
+        """
         
         xMin, xMax = xBounds
         yMin, yMax = yBounds
@@ -724,7 +730,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=40, display='particleBoxes')
+    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=40, display='momentumVectors')
     #
     # display can be either particleBoxes or momentumVectors
     #
