@@ -263,10 +263,12 @@ class Lattice:
     #================================================================================#
 
     def propagate(self):
-        """propagate process the first part of each "turn", where move from their parent
+        """
+        propagate process the first part of each "turn", where move from their parent
         node to another node, based on their index position. at the beginning of
         propagate, particles are moving away from the central node, at the end,
-        they are moved and considered to be moving away."""
+        they are moved and considered to be moving away.
+        """
         self.newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         
         vectorsOnEvenRow = [(1, 0, 3), (0, -1, 3), (-1, -1, 3), (-1, 0, -3), (-1, 1, -3), (0, 1, -3)]
@@ -288,11 +290,13 @@ class Lattice:
     #================================================================================#
 
     def collide(self):
-        """collide processes the second part of each "turn", where particles bounce off edges
+        """
+        collide processes the second part of each "turn", where particles bounce off edges
         and other particles. On entering collide, particles have an index which denotes the
         direction that they are approaching the center of the node from. During collide, the
         particles move from their original index, to another index, across the node if there
-        is no collision."""
+        is no collision.
+        """
         self.newBoard = np.zeros((self.containerSize, self.containerSize, 6), np.int8)
         standardVectors = [3, 3, 3, -3, -3, -3]
         topBounceVectors = [0, 4, 3, -3, -3, -4]
@@ -452,7 +456,8 @@ class Lattice:
     #================================================================================#
 
     def plot_rT(self, testValue='tStep', minValue=100, maxValue=500, pointNumber=12, n=5, style="linear", tStep=30):
-        """Graphs the rT values produced by the simulation.
+        """
+        Graphs the rT values produced by the simulation.
         
         INPUT:
         -testValue is the value that will correspond to the x axis, and be varied. Expects a string 'tStep', 
@@ -466,7 +471,8 @@ class Lattice:
         iteration, when testing containerSize or particleNumber.
 
         OUTPUT:
-        -prints information about each iteration to the terminal, once finished, the intended graph is displayed."""
+        -prints information about each iteration to the terminal, once finished, the intended graph is displayed.
+        """
 
         stdRTValues = []
         avgRTValues = []
@@ -548,8 +554,10 @@ class Lattice:
     #================================================================================#
 
     def point_change(self, index, newCoord):
-        """Takes the index value of coordList and the target coordinate. Replaces the value of
-        coord and adds a particle to the new board."""
+        """
+        Takes the index value of coordList and the target coordinate. Replaces the value of
+        coord and adds a particle to the new board.
+        """
         newy, newx, newz = newCoord
 
         self.coordList[index] = newCoord
@@ -557,44 +565,22 @@ class Lattice:
 
     #================================================================================#
 
-    def find_particle_boxes(self, resStep):
-        arrayResolution = int(self.containerSize / resStep)
-        resStep = int(resStep)
-        
-        
-        for y in range(arrayResolution):
-            for x in range(arrayResolution):
-                yStart = y * resStep
-                yEnd = (y + 1) * resStep
-                xStart = x * resStep
-                xEnd = (x + 1) * resStep
-                
-                self.heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
+    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, arrayResolution=20, display='particleBoxes'):
+        """
+        Method to display more advanced data, including a lower resolution particle map, and vector field diagram.
 
-    #================================================================================#
+        INPUT:
+        *timeStep- the total number of movement steps to process
+        *pauseBetweenSteps- the amount of time between each movement step, must be greater than zero.
+        *arrayResolution- the dimensions of the displayed array.
+        *display- either 'particleBoxes' or 'momentumVectors'. 
 
-    def find_momentum_vectors(self, resStep):
-        arrayResolution = int(self.containerSize / resStep)
-        resStep = int(resStep)
-        yVectorArray = np.zeros((arrayResolution, arrayResolution))
-        xVectorArray = np.zeros((arrayResolution, arrayResolution))
-
-        xyVectors = ((0.0, 1.0), (np.sqrt(3)/-2, 0.5), (np.sqrt(3)/-2, -0.5), (0.0, -1.0), (np.sqrt(3)/2, -0.5), (np.sqrt(3)/2, 0.5))
-
-        for coord in self.coordList:
-            y, x, z = coord
-            xVector, yVector = xyVectors[z]
-
-            yVectorArray[int(y // resStep)][int(x // resStep)] += yVector
-
-            xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
-        
-        return yVectorArray, xVectorArray
-
-    #================================================================================#
-
-    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, display='particleBoxes', arrayResolution=20):
-        
+        OUPUT:
+        displays a visualization, based on the value of display:
+        'particleBoxes' creates a heatmap of particle distribution with dimensions based on array resolution. 
+        Effectively, it is a lower resolution version of the standard display_heatmap().
+        'momentumVectors' uses the simulation to create a vector field of arrows, based on total momentum at each point.
+        """
         resolutionStep = self.containerSize / arrayResolution
         if resolutionStep - int(resolutionStep) != 0:
             raise AssertionError()
@@ -606,7 +592,7 @@ class Lattice:
 
         if display == 'particleBoxes':
             ax.set_title("Particle Distribution")
-            
+
             self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
             self.find_particle_boxes(resStep=resolutionStep)
 
@@ -648,6 +634,61 @@ class Lattice:
 
     #================================================================================#
 
+    def find_particle_boxes(self, resStep):
+        """
+        Used with the method display_advanced_data().
+        INPUT:
+        resStep- each "pixel" in the lattice has dimensions resStep x resStep,
+        therefore is equal to containerSize / arrayResolution.
+        
+        OUTPUT:
+        modifies self.heatmapList, replacing old values with the sum of all
+        particles in a "pixel" of the lattice. a "pixel" is a square of dimensions
+        resStep x resStep, and there are arrayResolution * arrayResolution "pixels".
+        """
+        arrayResolution = int(self.containerSize / resStep)
+        resStep = int(resStep)
+        
+        for y in range(arrayResolution):
+            for x in range(arrayResolution):
+                yStart = y * resStep
+                yEnd = (y + 1) * resStep
+                xStart = x * resStep
+                xEnd = (x + 1) * resStep
+                
+                self.heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
+
+    #================================================================================#
+
+    def find_momentum_vectors(self, resStep):
+        """
+        Used with the method display_advanced_data(), to create two lists of vector totals.
+        INPUT:
+        resStep- each "pixel" in the lattice has dimensions resStep x resStep,
+        therefore is equal to containerSize / arrayResolution.
+        
+        OUTPUT:
+        returns yVectorArray, xVectorArray in a tuple. both arrays are 2D, of dimensions
+        arrayResolution x arrayResolution, and contain the seperated x and y components of
+        total particle vectors.
+        """
+        arrayResolution = int(self.containerSize / resStep)
+        resStep = int(resStep)
+        yVectorArray = np.zeros((arrayResolution, arrayResolution))
+        xVectorArray = np.zeros((arrayResolution, arrayResolution))
+
+        xyVectors = ((0.0, 1.0), (np.sqrt(3)/-2, 0.5), (np.sqrt(3)/-2, -0.5), (0.0, -1.0), (np.sqrt(3)/2, -0.5), (np.sqrt(3)/2, 0.5))
+
+        for coord in self.coordList:
+            y, x, z = coord
+            xVector, yVector = xyVectors[z]
+
+            yVectorArray[int(y // resStep)][int(x // resStep)] += yVector
+            xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
+        
+        return yVectorArray, xVectorArray
+
+    #================================================================================#
 
 
 class TesterClass:
@@ -683,7 +724,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, display='particleBoxes', arrayResolution=40)
+    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=40, display='particleBoxes')
     #
     # display can be either particleBoxes or momentumVectors
     #
