@@ -619,7 +619,7 @@ class Lattice:
             ax.set_title("Momentum Vectors")
 
             while countVar > 0:
-                U, V = self.find_momentum_vectors(resStep=resolutionStep)
+                U, V, moment = self.find_momentum_vectors(resStep=resolutionStep)
                 X = np.arange(0, arrayResolution)
                 Y = np.arange(0, arrayResolution)
 
@@ -680,7 +680,7 @@ class Lattice:
         yVectorArray = np.zeros((arrayResolution, arrayResolution))
         xVectorArray = np.zeros((arrayResolution, arrayResolution))
         countArray = np.zeros((arrayResolution, arrayResolution))
-
+        totalMomentum = 0
         xyVectors = ((0.0, 1.0), (np.sqrt(3)/-2, 0.5), (np.sqrt(3)/-2, -0.5), (0.0, -1.0), (np.sqrt(3)/2, -0.5), (np.sqrt(3)/2, 0.5))
 
         for coord in self.coordList:
@@ -691,11 +691,13 @@ class Lattice:
             xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
 
             countArray[int(y // resStep)][int(x // resStep)] += 1
-        
+
+            totalMomentum += (xVector**2 + yVector**2)
+
         yVectorArray = np.true_divide(yVectorArray, countArray)
         xVectorArray = np.true_divide(xVectorArray, countArray)
-
-        return yVectorArray, xVectorArray
+        
+        return yVectorArray, xVectorArray, totalMomentum
 
     #================================================================================#
 
@@ -724,15 +726,30 @@ class TesterClass:
 
     #================================================================================#
 
+    def test_conserveMomentum(self):
+        latticeList = Lattice(containerSize=50, particleNumber=5000, distribution='random')
+        
+        y0, x0, momentum0 = latticeList.find_momentum_vectors(resStep=10)
+
+        latticeList.propagate()
+        latticeList.collide()
+
+        y0, x0, momentum1 = latticeList.find_momentum_vectors(resStep=10)
+
+        assert momentum0 == momentum1
+
+
+
+
 if __name__ == '__main__':
 
-    latticeList = Lattice(containerSize=400, particleNumber=2000, distribution='controlledRandom', yBounds=(2,50), xBounds=(2,50))
+    latticeList = Lattice(containerSize=100, particleNumber=600, distribution='controlledRandom', yBounds=(2,20), xBounds=(2,20))
 
     #latticeList.plot_rT(testValue='particleNumber', minValue=50, maxValue=10000, pointNumber=8, n=6, style="logarithmic", tStep=40)
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=40, display='momentumVectors')
+    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10, display='momentumVectors')
     #
     # display can be either particleBoxes or momentumVectors
     #
