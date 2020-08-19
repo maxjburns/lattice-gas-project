@@ -565,7 +565,7 @@ class Lattice:
 
     #================================================================================#
 
-    def display_advanced_data(self, timeStep=50, pauseBetweenSteps=.05, arrayResolution=20, display='particleBoxes'):
+    def display_advanced_data(self, displayType, title, timeStep=50, pauseBetweenSteps=.05, arrayResolution=20):
         """
         Method to display more advanced data, including a lower resolution particle map, and vector field diagram.
 
@@ -573,7 +573,9 @@ class Lattice:
         *timeStep- the total number of movement steps to process
         *pauseBetweenSteps- the amount of time between each movement step, must be greater than zero.
         *arrayResolution- the dimensions of the displayed array.
-        *display- either 'particleBoxes' or 'momentumVectors'. 
+        *display- takes a function which returns one or more lists. One list will create a heatmap,
+        two lists will create a vector map, three lists will create a vector map with a heatmap
+        in the background.
 
         OUPUT:
         displays a visualization, based on the value of display:
@@ -589,51 +591,46 @@ class Lattice:
         countVar = self.timeStep
         fig, ax = plt.subplots()
         fig.tight_layout()
+        ax.set_title(str(title))
+        
+        data = displayType(resolutionStep)
+        theType = type(np.zeros((2,2,2)))
+        arraysOnly = [val for val in data if type(val)==theType]
+        del(theType)
+        if np.shape(arraysOnly) == (1, arrayResolution, arrayResolution):
+            arraysOnly = arraysOnly[0]
+            print(np.shape(arraysOnly))
 
-        if display == 'particleBoxes':
-            ax.set_title("Particle Distribution")
+        for countVar in range(self.timeStep, 0, -1):
+            if np.shape(arraysOnly) == (arrayResolution, arrayResolution):
+                if np.shape(data) != (arrayResolution, arrayResolution):
+                    numberList = []
+                    for i in range(1, len(data)):
+                        numberList.append(data[i])
+                    data = data[0]
 
-            self.heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
-            self.find_particle_boxes(resStep=resolutionStep)
+                if countVar == self.timeStep:
+                    im = ax.imshow(data, cmap='Blues', interpolation='bilinear')
+                    im.set_clim(vmin=0, vmax=np.max(data)/2)
+                    fig.colorbar(im, ax=ax)
 
-            im = ax.imshow(self.heatmapList, cmap='Blues', interpolation='bilinear')
-            im.set_clim(vmin=0, vmax=np.max(self.heatmapList)/2)
-            fig.colorbar(im, ax=ax)
-
-            while countVar > 0:
-                if countVar % 50 == 0:
-                    im.set_clim(vmin=0, vmax=np.max(self.heatmapList))
+                if np.max(data) > 5:
+                    im.set_clim(vmin=0, vmax=np.max(data)/2)
                 
-                self.find_particle_boxes(resStep=resolutionStep)
-                im.set_data(self.heatmapList)
-
-                self.propagate()
-                self.collide()
+                im.set_data(data)
                 
-                plt.pause(pauseBetweenSteps)
-                countVar -=1
-            
-            plt.show()
-
-        elif display=='momentumVectors':
-            ax.set_title("Momentum Vectors")
-
-            while countVar > 0:
-                U, V, moment = self.find_momentum_vectors(resStep=resolutionStep)
-                X = np.arange(0, arrayResolution)
-                Y = np.arange(0, arrayResolution)
-
+            elif len(arraysOnly) == 2:
                 if countVar % resolutionStep == 0:
                     plt.clf()
-                    plt.quiver(X, Y, U, V, scale=8, scale_units='inches')
+                    plt.quiver(data[0], data[1], scale=8, scale_units='inches')
 
-                self.propagate()
-                self.collide()
+            self.propagate()
+            self.collide()
                 
-                plt.pause(pauseBetweenSteps)
-                countVar -=1
-            
-            plt.show()            
+            plt.pause(pauseBetweenSteps)
+            data = displayType(resolutionStep)
+
+        plt.show()         
 
     #================================================================================#
 
@@ -650,6 +647,7 @@ class Lattice:
         resStep x resStep, and there are arrayResolution * arrayResolution "pixels".
         """
         arrayResolution = int(self.containerSize / resStep)
+        heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
         resStep = int(resStep)
         
         for y in range(arrayResolution):
@@ -659,7 +657,9 @@ class Lattice:
                 xStart = x * resStep
                 xEnd = (x + 1) * resStep
                 
-                self.heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
+                heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
+
+        return heatmapList, 5, 6
 
     #================================================================================#
 
@@ -719,10 +719,10 @@ class TesterClass:
     #================================================================================#
 
     def test_particlesDisappear(self):
-        latticeList = Lattice(containerSize=15, particleNumber=10, distribution='random')
-        latticeList.no_display_run(timeStep=300, numberOfRuns=1)
+        latticeList = Lattice(containerSize=100, particleNumber=500, distribution='random')
+        latticeList.no_display_run(timeStep=300, numberOfRuns=5)
         latticeList.particle_counter()
-        assert np.sum(latticeList.particle_counter()) == 10
+        assert np.sum(latticeList.particle_counter()) == 500
 
     #================================================================================#
 
@@ -730,11 +730,15 @@ class TesterClass:
         latticeList = Lattice(containerSize=50, particleNumber=5000, distribution='random')
         
         y0, x0, momentum0 = latticeList.find_momentum_vectors(resStep=10)
+        del(y0)
+        del(x0)
 
         latticeList.propagate()
         latticeList.collide()
 
-        y0, x0, momentum1 = latticeList.find_momentum_vectors(resStep=10)
+        y1, x1, momentum1 = latticeList.find_momentum_vectors(resStep=10)
+        del(y1)
+        del(x1)
 
         assert momentum0 == momentum1
 
@@ -749,7 +753,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10, display='momentumVectors')
+    latticeList.display_advanced_data(latticeList.find_particle_boxes, title='momentum vectors', timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10)
     #
     # display can be either particleBoxes or momentumVectors
     #
