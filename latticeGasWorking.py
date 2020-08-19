@@ -621,13 +621,32 @@ class Lattice:
             elif len(arraysOnly) == 2:
                 if countVar % resolutionStep == 0:
                     plt.clf()
+                    ax.set_title(str(title))
                     plt.quiver(data[0], data[1], scale=8, scale_units='inches')
 
+            elif len(arraysOnly) == 3:
+                
+                #if countVar % resolutionStep == 0:
+
+                ax.cla()
+                ax.set_title(str(title))
+                ax.quiver(data[0], data[1], scale=4, scale_units='inches', color='w', lw=.5, ec='black')
+                im = ax.imshow(data[2], cmap='plasma', interpolation='bilinear')
+
+                if countVar == self.timeStep:
+                    im.set_clim(vmin=0, vmax=np.max(data[2])/2)
+                    fig.colorbar(im, ax=ax)
+
+                if np.max(data[2]) > 5:
+                    im.set_clim(vmin=0, vmax=np.max(data[2])/2)
+
+            
             self.propagate()
             self.collide()
                 
             plt.pause(pauseBetweenSteps)
             data = displayType(resolutionStep)
+            
 
         plt.show()         
 
@@ -700,6 +719,40 @@ class Lattice:
 
     #================================================================================#
 
+    def find_energy(self, resStep):
+        """
+        Used with the method display_advanced_data().
+        INPUT:
+        resStep- each "pixel" in the lattice has dimensions resStep x resStep,
+        therefore is equal to containerSize / arrayResolution.
+        
+        OUTPUT:
+        modifies self.heatmapList, replacing old values with the sum of all
+        particles in a "pixel" of the lattice. a "pixel" is a square of dimensions
+        resStep x resStep, and there are arrayResolution * arrayResolution "pixels".
+        """
+        arrayResolution = int(self.containerSize / resStep)
+        heatmapList = np.zeros((arrayResolution, arrayResolution), dtype=int)
+        resStep = int(resStep)
+        xyVectors = ((0.0, 1.0), (np.sqrt(3)/2, 0.5), (np.sqrt(3)/2, -0.5), (0.0, -1.0), (np.sqrt(3)/-2, -0.5), (np.sqrt(3)/-2, 0.5))
+        yVectorArray = np.zeros((arrayResolution, arrayResolution))
+        xVectorArray = np.zeros((arrayResolution, arrayResolution))
+
+        for coord in self.coordList:
+            y, x, z = coord
+            xVector, yVector = xyVectors[z]
+
+            yVectorArray[int(y // resStep)][int(x // resStep)] += yVector
+            xVectorArray[int(y // resStep)][int(x // resStep)] += xVector
+
+            heatmapList[int(y // resStep)][x // resStep] += 1
+
+        yVectorArray = np.true_divide(yVectorArray, heatmapList)
+        xVectorArray = np.true_divide(xVectorArray, heatmapList)
+
+        return yVectorArray, xVectorArray, heatmapList
+
+
 
 class TesterClass:
     
@@ -741,9 +794,6 @@ class TesterClass:
 
         assert momentum0 == momentum1
 
-
-
-
 if __name__ == '__main__':
 
     latticeList = Lattice(containerSize=100, particleNumber=600, distribution='controlledRandom', yBounds=(2,20), xBounds=(2,20))
@@ -752,7 +802,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(latticeList.find_momentum_vectors, title='momentum vectors', timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10)
+    latticeList.display_advanced_data(latticeList.find_energy, title='energy flow', timeStep=5000, pauseBetweenSteps=0.01, arrayResolution=10)
     #
     # display can be either particleBoxes or momentumVectors
     #
