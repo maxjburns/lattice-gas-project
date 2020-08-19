@@ -599,7 +599,6 @@ class Lattice:
         del(theType)
         if np.shape(arraysOnly) == (1, arrayResolution, arrayResolution):
             arraysOnly = arraysOnly[0]
-            print(np.shape(arraysOnly))
 
         for countVar in range(self.timeStep, 0, -1):
             if np.shape(arraysOnly) == (arrayResolution, arrayResolution):
@@ -659,7 +658,7 @@ class Lattice:
                 
                 heatmapList[y][x] = np.sum(self.lattice[yStart:yEnd, xStart:xEnd])
 
-        return heatmapList, 5, 6
+        return heatmapList
 
     #================================================================================#
 
@@ -753,7 +752,7 @@ if __name__ == '__main__':
     #latticeList.no_display_run(timeStep=30, numberOfRuns=1)
 
     #latticeList.display_heatmap(timeStep=100, pauseBetweenSteps=.05)
-    latticeList.display_advanced_data(latticeList.find_particle_boxes, title='momentum vectors', timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10)
+    latticeList.display_advanced_data(latticeList.find_momentum_vectors, title='momentum vectors', timeStep=5000, pauseBetweenSteps=0.001, arrayResolution=10)
     #
     # display can be either particleBoxes or momentumVectors
     #
