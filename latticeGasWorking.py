@@ -622,15 +622,12 @@ class Lattice:
                 if countVar % resolutionStep == 0:
                     plt.clf()
                     ax.set_title(str(title))
-                    plt.quiver(data[0], data[1], scale=8, scale_units='inches')
+                    plt.quiver(data[0], data[1], scale=int(arrayResolution / 3), scale_units='inches')
 
             elif len(arraysOnly) == 3:
-                
-                #if countVar % resolutionStep == 0:
-
                 ax.cla()
                 ax.set_title(str(title))
-                ax.quiver(data[0], data[1], scale=4, scale_units='inches', color='w', lw=.5, ec='black')
+                ax.quiver(data[0], data[1], scale = int(arrayResolution / 3), scale_units='inches', color='w', lw=.5, ec='black')
                 im = ax.imshow(data[2], cmap='plasma', interpolation='bilinear')
 
                 if countVar == self.timeStep:
@@ -640,14 +637,12 @@ class Lattice:
                 if np.max(data[2]) > 5:
                     im.set_clim(vmin=0, vmax=np.max(data[2])/2)
 
-            
             self.propagate()
             self.collide()
                 
             plt.pause(pauseBetweenSteps)
             data = displayType(resolutionStep)
             
-
         plt.show()         
 
     #================================================================================#
